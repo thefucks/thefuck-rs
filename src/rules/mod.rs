@@ -1,11 +1,12 @@
 mod cargo;
+mod git;
 
 use crate::Command;
 use lazy_static::lazy_static;
 use std::{collections::HashMap, sync::Arc};
 
 lazy_static! {
-    pub(crate) static ref RULES: Rules = Rules::new(cargo::rules());
+    pub(crate) static ref RULES: Rules = Rules::new(cargo::rules().chain(git::rules()));
 }
 
 /// Map of a command to the `Rule`s that may apply for the given command.
