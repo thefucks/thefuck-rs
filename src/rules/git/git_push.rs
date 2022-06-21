@@ -37,10 +37,10 @@ impl Rule for GitPush {
         while idx < command_parts.len() {
             let part = &command_parts[idx];
             if part.starts_with('-') {
-                if part == &SET_UPSTREAM_LONG_NAME {
+                if part == SET_UPSTREAM_LONG_NAME {
                     // --set-upstream also has an arg so skip that as well
                     idx += 1;
-                } else if part != &SET_UPSTREAM_SHORT_NAME {
+                } else if part != SET_UPSTREAM_SHORT_NAME {
                     new_command_parts.push(part);
                 }
             }
