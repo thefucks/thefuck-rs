@@ -6,6 +6,6 @@ use std::sync::Arc;
 mod cargo_build;
 mod cargo_no_command;
 
-pub(crate) fn rules() -> impl Iterator<Item = Arc<dyn Rule>> {
-    [Cargo.to_arc(), CargoNoCommand.to_arc()].into_iter()
+pub(crate) fn rules_for_command() -> (&'static str, Vec<Arc<dyn Rule>>) {
+    ("cargo", vec![Cargo.to_arc(), CargoNoCommand.to_arc()])
 }

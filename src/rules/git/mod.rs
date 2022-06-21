@@ -1,10 +1,9 @@
+use crate::rules::git::git_push::GitPush;
 use crate::rules::Rule;
 use std::sync::Arc;
 
-use crate::rules::git::git_push::GitPush;
-
 mod git_push;
 
-pub(crate) fn rules() -> impl Iterator<Item = Arc<dyn Rule>> {
-    [GitPush.to_arc()].into_iter()
+pub(crate) fn rules_for_command() -> (&'static str, Vec<Arc<dyn Rule>>) {
+    ("git", vec![GitPush.to_arc()])
 }

@@ -3,10 +3,6 @@ use crate::Command;
 
 pub(crate) struct Cargo;
 impl Rule for Cargo {
-    fn for_commands(&self) -> Vec<&'static str> {
-        vec!["cargo"]
-    }
-
     fn matches(&self, command: &Command) -> bool {
         command.input == "cargo"
     }

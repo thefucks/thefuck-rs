@@ -10,10 +10,6 @@ lazy_static! {
 }
 
 impl Rule for CargoNoCommand {
-    fn for_commands(&self) -> Vec<&'static str> {
-        vec!["cargo"]
-    }
-
     fn matches(&self, command: &Command) -> bool {
         command.output.to_lowercase().contains("no such subcommand") && RE.is_match(command.output)
     }
