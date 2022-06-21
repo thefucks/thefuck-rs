@@ -1,3 +1,5 @@
+mod generic;
+
 mod cargo;
 mod git;
 
@@ -10,6 +12,7 @@ lazy_static! {
         cargo::rules_for_command(),
         git::rules_for_command()
     ]));
+    pub(crate) static ref GENERIC_RULES: Vec<Arc<dyn Rule>> = generic::rules();
 }
 
 /// Map of a command to the `Rule`s that may apply for the given command.

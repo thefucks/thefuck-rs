@@ -17,6 +17,7 @@ pub fn command_corrections(command_input: &str, command_output: &str) -> Vec<Str
         .get(command_name)
         .into_iter()
         .flatten()
+        .chain(rules::GENERIC_RULES.iter())
         .filter_map(|rule| {
             if rule.matches(&command) {
                 rule.generate_command_corrections(&command)
