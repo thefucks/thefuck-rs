@@ -3,8 +3,6 @@ use crate::Command;
 use lazy_static::lazy_static;
 use regex::Regex;
 
-pub(crate) struct GitPush;
-
 const SET_UPSTREAM_LONG_NAME: &str = "--set-upstream";
 const SET_UPSTREAM_SHORT_NAME: &str = "-u";
 
@@ -13,7 +11,12 @@ lazy_static! {
         Regex::new(format!("(git push {SET_UPSTREAM_LONG_NAME} .*)").as_str()).unwrap();
 }
 
-impl Rule for GitPush {
+/*
+Fixes a git push command that is missing the "--set-upstream" option and arg.
+See more here: https://github.com/nvbn/thefuck/blob/5198b34f24ca4bc414a5bf1b0288ee86ea2529a8/thefuck/rules/git_push.py
+*/
+pub(crate) struct GitPushSetUpstream;
+impl Rule for GitPushSetUpstream {
     fn matches(&self, command: &Command) -> bool {
         command.input_parts().iter().any(|part| part == "push") && RE.is_match(command.output)
     }

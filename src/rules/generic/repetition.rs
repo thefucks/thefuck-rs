@@ -1,6 +1,10 @@
 use crate::rules::Rule;
 use crate::Command;
 
+/*
+Fixes error for commands that accidentally repeat the top-level command, e.g. "git git status".
+See more here: https://github.com/nvbn/thefuck/blob/5198b34f24ca4bc414a5bf1b0288ee86ea2529a8/thefuck/rules/dry.py
+*/
 pub(crate) struct Repetition;
 impl Rule for Repetition {
     // TODO: once Command carries contextual info (like exit codes), we should

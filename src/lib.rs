@@ -32,6 +32,7 @@ pub fn command_corrections(command_input: &str, command_output: &str) -> Vec<Str
 struct Command<'a> {
     input: &'a str,
     output: &'a str,
+    lowercase_output: String,
     input_parts: Vec<String>,
 }
 
@@ -39,16 +40,22 @@ impl<'a> Command<'a> {
     pub fn new(input: &'a str, output: &'a str) -> Self {
         // TODO: We need to re-escape multiword parts in the input after splitting. Thefuck has a
         // terribly hacky way of doing this here: https://github.com/nvbn/thefuck/blob/4c7479b3adcf8715a93d0c48e1ece83a35cda50d/thefuck/shells/generic.py#L87
-        let script_parts = shlex::split(input).unwrap_or_default();
+        let input_parts = shlex::split(input).unwrap_or_default();
+        let lowercase_output = output.to_lowercase();
 
         Self {
             input,
             output,
-            input_parts: script_parts,
+            lowercase_output,
+            input_parts,
         }
     }
 
     pub fn input_parts(&self) -> &[String] {
         self.input_parts.deref()
+    }
+
+    pub fn lowercase_output(&self) -> &str {
+        self.lowercase_output.as_str()
     }
 }

@@ -3,15 +3,18 @@ use crate::Command;
 use lazy_static::lazy_static;
 use regex::Regex;
 
-pub(crate) struct CargoNoCommand;
-
 lazy_static! {
     static ref RE: Regex = Regex::new("(?i)Did you mean `([^`]*)").unwrap();
 }
 
+/*
+Corrects a misspelled `cargo *` command based on the `Did you mean` recommendations from cargo.
+See more here: https://github.com/nvbn/thefuck/blob/5198b34f24ca4bc414a5bf1b0288ee86ea2529a8/thefuck/rules/cargo_no_command.py
+*/
+pub(crate) struct CargoNoCommand;
 impl Rule for CargoNoCommand {
     fn matches(&self, command: &Command) -> bool {
-        command.output.to_lowercase().contains("no such subcommand") && RE.is_match(command.output)
+        command.lowercase_output().contains("no such subcommand") && RE.is_match(command.output)
     }
 
     fn generate_command_corrections(&self, command: &Command) -> Option<Vec<String>> {

@@ -1,6 +1,10 @@
 use crate::rules::Rule;
 use crate::Command;
 
+/*
+Corrects a command that looks like "cargo" to "cargo build".
+See more here: https://github.com/nvbn/thefuck/blob/5198b34f24ca4bc414a5bf1b0288ee86ea2529a8/thefuck/rules/cargo.py
+*/
 pub(crate) struct Cargo;
 impl Rule for Cargo {
     fn matches(&self, command: &Command) -> bool {

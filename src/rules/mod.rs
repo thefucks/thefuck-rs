@@ -1,7 +1,8 @@
-mod generic;
-
 mod cargo;
+mod generic;
 mod git;
+
+mod util;
 
 use crate::Command;
 use lazy_static::lazy_static;
