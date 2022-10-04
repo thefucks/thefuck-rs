@@ -1,5 +1,5 @@
 use crate::rules::Rule;
-use crate::Command;
+use crate::{Command, Correction};
 
 /*
 Fixes error for commands that accidentally repeat the top-level command, e.g. "git git status".
@@ -18,11 +18,11 @@ impl Rule for Repetition {
         false
     }
 
-    fn generate_command_corrections(&self, command: &Command) -> Option<Vec<String>> {
+    fn generate_command_corrections(&self, command: &Command) -> Option<Vec<Correction>> {
         if command.input_parts().len() < 2 {
             None
         } else {
-            Some(vec![command.input_parts()[1..].join(" ")])
+            Some(vec![command.input_parts()[1..].into()])
         }
     }
 }

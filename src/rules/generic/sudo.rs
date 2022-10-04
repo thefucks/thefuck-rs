@@ -4,8 +4,7 @@ See more here: https://github.com/nvbn/thefuck/blob/5198b34f24ca4bc414a5bf1b0288
 */
 
 use crate::rules::Rule;
-use crate::Command;
-use itertools::Itertools;
+use crate::{Command, Correction};
 
 pub(crate) struct Sudo;
 
@@ -53,13 +52,9 @@ impl Rule for Sudo {
             .any(|pattern| lowercase_output.contains(pattern))
     }
 
-    fn generate_command_corrections(&self, command: &Command) -> Option<Vec<String>> {
-        let new_command = command
-            .input
-            .split("&&")
-            .map(|cmd| format!("sudo {}", cmd.trim()))
-            .join(" && ");
-        Some(vec![new_command])
+    fn generate_command_corrections(&self, command: &Command) -> Option<Vec<Correction>> {
+        let new_command = [&["sudo".to_owned()], command.input_parts()].concat();
+        Some(vec![new_command.into()])
     }
 }
 
@@ -72,14 +67,6 @@ mod tests {
         assert_eq!(
             command_corrections("rm file", "permission denied"),
             vec!["sudo rm file"]
-        )
-    }
-
-    #[test]
-    fn test_multiple_commands() {
-        assert_eq!(
-            command_corrections("rm file1 && rm file2", "permission denied"),
-            vec!["sudo rm file1 && sudo rm file2"]
         )
     }
 }

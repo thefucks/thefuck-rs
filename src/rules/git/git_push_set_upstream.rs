@@ -1,5 +1,5 @@
 use crate::rules::Rule;
-use crate::Command;
+use crate::{Command, Correction};
 use lazy_static::lazy_static;
 use regex::Regex;
 
@@ -8,7 +8,7 @@ const SET_UPSTREAM_SHORT_NAME: &str = "-u";
 
 lazy_static! {
     static ref RE: Regex =
-        Regex::new(format!("(git push {SET_UPSTREAM_LONG_NAME} .*)").as_str()).unwrap();
+        Regex::new(format!("git push {SET_UPSTREAM_LONG_NAME} (.*) (.*)").as_str()).unwrap();
 }
 
 /*
@@ -21,22 +21,23 @@ impl Rule for GitPushSetUpstream {
         command.input_parts().iter().any(|part| part == "push") && RE.is_match(command.output)
     }
 
-    fn generate_command_corrections(&self, command: &Command) -> Option<Vec<String>> {
+    fn generate_command_corrections(&self, command: &Command) -> Option<Vec<Correction>> {
         let command_parts = command.input_parts();
-        let mut new_command_parts = vec![];
-        let mut idx = 0;
+        let mut new_command_parts = vec!["git", "push", SET_UPSTREAM_LONG_NAME];
 
-        // Get the suggested git command
-        let vanilla_push_with_upstream = RE
+        // Get the suggested remote and branch names
+        let (remote, branch) = RE
             .captures(command.output)
-            .and_then(|captures| captures.get(1))
-            .map(|regex_match| regex_match.as_str())?;
+            .and_then(|captures| Some((captures.get(1)?, captures.get(2)?)))
+            .map(|(remote, branch)| (remote.as_str(), branch.as_str()))?;
 
-        // Add the suggested git command as the first part of the corrected comamnd
-        new_command_parts.push(vanilla_push_with_upstream);
+        // Add the suggested git remote to the corrected comamnd
+        new_command_parts.push(remote);
+        new_command_parts.push(branch);
 
         // Add any options except --set-upstream and -u back to the command
         // because the suggested git command wouldn't have included them
+        let mut idx = 0;
         while idx < command_parts.len() {
             let part = &command_parts[idx];
             if part.starts_with('-') {
@@ -50,7 +51,7 @@ impl Rule for GitPushSetUpstream {
             idx += 1;
         }
 
-        Some(vec![new_command_parts.join(" ")])
+        Some(vec![new_command_parts.into()])
     }
 }
 

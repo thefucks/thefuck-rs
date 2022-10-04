@@ -1,5 +1,5 @@
 use crate::rules::Rule;
-use crate::Command;
+use crate::{Command, Correction};
 
 /*
 Fixes a git push command that actually requires a "--force-with-lease".
@@ -16,12 +16,11 @@ impl Rule for GitPushForce {
                 .contains("updates were rejected because the tip of your current branch is behind")
     }
 
-    fn generate_command_corrections(&self, command: &Command) -> Option<Vec<String>> {
+    fn generate_command_corrections(&self, command: &Command) -> Option<Vec<Correction>> {
         let mut new_command = command.input_parts().to_vec();
         let push_index = new_command.iter().position(|part| part == "push")?;
-        *new_command.get_mut(push_index)? = "push --force-with-lease".to_owned();
-
-        Some(vec![new_command.join(" ")])
+        new_command.insert(push_index + 1, "--force-with-lease".to_owned());
+        Some(vec![new_command.into()])
     }
 }
 

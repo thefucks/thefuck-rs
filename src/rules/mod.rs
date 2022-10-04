@@ -4,7 +4,7 @@ mod git;
 
 mod util;
 
-use crate::Command;
+use crate::{Command, Correction};
 use lazy_static::lazy_static;
 use std::{collections::HashMap, sync::Arc};
 
@@ -38,5 +38,5 @@ pub(crate) trait Rule: Send + Sync {
 
     /// Generates a list of command corrections for a command. This is only called if `matches`
     /// returns true.
-    fn generate_command_corrections(&self, command: &Command) -> Option<Vec<String>>;
+    fn generate_command_corrections(&self, command: &Command) -> Option<Vec<Correction>>;
 }

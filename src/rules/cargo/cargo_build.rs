@@ -1,5 +1,5 @@
 use crate::rules::Rule;
-use crate::Command;
+use crate::{Command, Correction};
 
 /*
 Corrects a command that looks like "cargo" to "cargo build".
@@ -11,8 +11,8 @@ impl Rule for Cargo {
         command.input == "cargo"
     }
 
-    fn generate_command_corrections(&self, _command: &Command) -> Option<Vec<String>> {
-        Some(vec!["cargo build".into()])
+    fn generate_command_corrections(&self, _command: &Command) -> Option<Vec<Correction>> {
+        Some(vec![vec!["cargo", "build"].into()])
     }
 }
 

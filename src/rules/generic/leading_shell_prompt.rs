@@ -1,5 +1,5 @@
 use crate::rules::Rule;
-use crate::Command;
+use crate::{Command, Correction};
 use lazy_static::lazy_static;
 use regex::Regex;
 
@@ -18,10 +18,8 @@ impl Rule for LeadingShellPrompt {
         command.output.to_lowercase().contains("command not found") && RE.is_match(command.input)
     }
 
-    fn generate_command_corrections(&self, command: &Command) -> Option<Vec<String>> {
-        RE.captures(command.input)
-            .and_then(|captures| captures.get(1))
-            .map(|regex_match| vec![regex_match.as_str().to_owned()])
+    fn generate_command_corrections(&self, command: &Command) -> Option<Vec<Correction>> {
+        Some(vec![command.input_parts()[1..].into()])
     }
 }
 

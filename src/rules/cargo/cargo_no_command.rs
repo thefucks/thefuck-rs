@@ -1,5 +1,5 @@
 use crate::rules::Rule;
-use crate::Command;
+use crate::{Command, Correction};
 use lazy_static::lazy_static;
 use regex::Regex;
 
@@ -17,7 +17,7 @@ impl Rule for CargoNoCommand {
         command.lowercase_output().contains("no such subcommand") && RE.is_match(command.output)
     }
 
-    fn generate_command_corrections(&self, command: &Command) -> Option<Vec<String>> {
+    fn generate_command_corrections(&self, command: &Command) -> Option<Vec<Correction>> {
         let fix = RE
             .captures(command.output)
             .and_then(|captures| captures.get(1))
@@ -26,7 +26,7 @@ impl Rule for CargoNoCommand {
         let mut replacement = command.input_parts().to_vec();
         *replacement.get_mut(1)? = fix.to_owned();
 
-        Some(vec![replacement.join(" ")])
+        Some(vec![replacement.into()])
     }
 }
 

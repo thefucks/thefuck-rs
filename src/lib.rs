@@ -1,6 +1,43 @@
 use std::ops::Deref;
 
+use itertools::Itertools;
+
 mod rules;
+
+/// A correction is a collection of shell command parts.
+/// Example: if the corrected command is `git commit -m "best fix"`, then the correction is
+/// ["git", "commit", "-m", "best fix"]. Note that "best fix" is a single part. This is important
+/// as it guarantees the correct shell-escaped command is returned in `to_command_string`.
+/// TODO: investigate if we can use Cow<str> instead of String's here.
+/// TODO: add a more ergonomic API for testing with `Correction`s
+#[derive(Debug, PartialEq)]
+struct Correction(pub Vec<String>);
+impl Correction {
+    fn to_command_string(&self) -> String {
+        shlex::join(self.0.iter().map(|part| part.as_str()))
+    }
+}
+
+impl From<Vec<String>> for Correction {
+    fn from(parts: Vec<String>) -> Self {
+        Correction(parts)
+    }
+}
+impl From<&[&str]> for Correction {
+    fn from(parts: &[&str]) -> Self {
+        Correction(parts.iter().map(|p| p.to_string()).collect_vec())
+    }
+}
+impl From<&[String]> for Correction {
+    fn from(parts: &[String]) -> Self {
+        Correction(parts.to_vec())
+    }
+}
+impl From<Vec<&str>> for Correction {
+    fn from(parts: Vec<&str>) -> Self {
+        parts[..].into()
+    }
+}
 
 /// Returns a list of command corrections given a command and its output. This is _heavily_ inspired
 /// by The Fuck (https://github.com/nvbn/thefuck).
@@ -19,13 +56,12 @@ pub fn command_corrections(command_input: &str, command_output: &str) -> Vec<Str
         .flatten()
         .chain(rules::GENERIC_RULES.iter())
         .filter_map(|rule| {
-            if rule.matches(&command) {
-                rule.generate_command_corrections(&command)
-            } else {
-                None
-            }
+            rule.matches(&command)
+                .then(|| rule.generate_command_corrections(&command))
+                .flatten()
         })
         .flatten()
+        .map(|correction| correction.to_command_string())
         .collect()
 }
 

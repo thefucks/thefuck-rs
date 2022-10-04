@@ -4,7 +4,7 @@ See more here: https://github.com/nvbn/thefuck/blob/5198b34f24ca4bc414a5bf1b0288
 */
 
 use crate::rules::Rule;
-use crate::Command;
+use crate::{Command, Correction};
 use lazy_static::lazy_static;
 use regex::Regex;
 
@@ -21,11 +21,11 @@ impl Rule for GitCheckout {
             && RE.is_match(command.lowercase_output())
     }
 
-    fn generate_command_corrections(&self, command: &Command) -> Option<Vec<String>> {
+    fn generate_command_corrections(&self, command: &Command) -> Option<Vec<Correction>> {
         let mut replacement = command.input_parts().to_vec();
-        *replacement.get_mut(1)? = "checkout -b".to_owned();
-
-        Some(vec![replacement.join(" ")])
+        let checkout_pos = replacement.iter().position(|p| p == "checkout")?;
+        replacement.insert(checkout_pos + 1, "-b".to_owned());
+        Some(vec![replacement.into()])
     }
 }
 

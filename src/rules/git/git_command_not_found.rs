@@ -1,6 +1,6 @@
 use crate::rules::util::new_commands_from_suggestions;
 use crate::rules::Rule;
-use crate::Command;
+use crate::{Command, Correction};
 use lazy_static::lazy_static;
 use regex::Regex;
 
@@ -25,7 +25,7 @@ impl Rule for GitCommandNotFound {
                 || DID_YOU_MEAN_RE.is_match(lowercase_output))
     }
 
-    fn generate_command_corrections(&self, command: &Command) -> Option<Vec<String>> {
+    fn generate_command_corrections(&self, command: &Command) -> Option<Vec<Correction>> {
         let lowercase_output = command.lowercase_output();
 
         let incorrect_command = NOT_GIT_COMMAND_RE
