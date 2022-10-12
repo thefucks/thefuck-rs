@@ -18,7 +18,10 @@ impl Rule for LeadingShellPrompt {
         command.output.to_lowercase().contains("command not found") && RE.is_match(command.input)
     }
 
-    fn generate_command_corrections(&self, command: &Command) -> Option<Vec<Correction>> {
+    fn generate_command_corrections<'a>(
+        &self,
+        command: &'a Command,
+    ) -> Option<Vec<Correction<'a>>> {
         Some(vec![command.input_parts()[1..].into()])
     }
 }

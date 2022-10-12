@@ -21,7 +21,10 @@ impl Rule for GitCheckout {
             && RE.is_match(command.lowercase_output())
     }
 
-    fn generate_command_corrections(&self, command: &Command) -> Option<Vec<Correction>> {
+    fn generate_command_corrections<'a>(
+        &self,
+        command: &'a Command,
+    ) -> Option<Vec<Correction<'a>>> {
         let mut replacement = command.input_parts().to_vec();
         let checkout_pos = replacement.iter().position(|p| p == "checkout")?;
         replacement.insert(checkout_pos + 1, "-b".to_owned());

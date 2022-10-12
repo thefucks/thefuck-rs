@@ -1,4 +1,4 @@
-use std::ops::Deref;
+use std::borrow::Cow;
 
 use itertools::Itertools;
 
@@ -8,34 +8,40 @@ mod rules;
 /// Example: if the corrected command is `git commit -m "best fix"`, then the correction is
 /// ["git", "commit", "-m", "best fix"]. Note that "best fix" is a single part. This is important
 /// as it guarantees the correct shell-escaped command is returned in `to_command_string`.
-/// TODO: investigate if we can use Cow<str> instead of String's here.
-/// TODO: add a more ergonomic API for testing with `Correction`s
+/// Note: although translating into a Correction seems expensive (using Vecs), very few corrections
+/// are actually computed (only for matching top-level command and if the rule `matches`)
+///
+/// Note about Cow<str>: we use a Cow here since the string will either be a reference
+/// to one of the input parts, a static string, or a computed string over an input part.
+/// In the first two cases, a borrowed string suffices, but in the last case, we need an owned string.
+/// Using a Cow allows us to avoid `clone`s for the first two types of strings.
 #[derive(Debug, PartialEq)]
-struct Correction(pub Vec<String>);
-impl Correction {
+struct Correction<'a>(pub Vec<Cow<'a, str>>);
+impl<'a> Correction<'a> {
     fn to_command_string(&self) -> String {
-        shlex::join(self.0.iter().map(|part| part.as_str()))
+        shlex::join(self.0.iter().map(|part| part.as_ref()))
     }
 }
-
-impl From<Vec<String>> for Correction {
-    fn from(parts: Vec<String>) -> Self {
-        Correction(parts)
+impl<'a, T> From<Vec<T>> for Correction<'a>
+where
+    T: Into<Cow<'a, str>>,
+{
+    fn from(parts: Vec<T>) -> Self {
+        Correction(parts.into_iter().map(Into::into).collect_vec())
     }
 }
-impl From<&[&str]> for Correction {
-    fn from(parts: &[&str]) -> Self {
-        Correction(parts.iter().map(|p| p.to_string()).collect_vec())
-    }
-}
-impl From<&[String]> for Correction {
-    fn from(parts: &[String]) -> Self {
-        Correction(parts.to_vec())
-    }
-}
-impl From<Vec<&str>> for Correction {
-    fn from(parts: Vec<&str>) -> Self {
-        parts[..].into()
+impl<'a, T> From<&'a [T]> for Correction<'a>
+where
+    T: AsRef<str>,
+{
+    fn from(parts: &'a [T]) -> Self {
+        Correction(
+            parts
+                .iter()
+                .map(AsRef::as_ref)
+                .map(Into::into)
+                .collect_vec(),
+        )
     }
 }
 
@@ -88,7 +94,7 @@ impl<'a> Command<'a> {
     }
 
     pub fn input_parts(&self) -> &[String] {
-        self.input_parts.deref()
+        &self.input_parts
     }
 
     pub fn lowercase_output(&self) -> &str {

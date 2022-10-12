@@ -6,7 +6,7 @@ pub(crate) fn new_commands_from_suggestions<'a>(
     suggestions: impl IntoIterator<Item = &'a str>,
     input_parts: &[String],
     to_replace: &str,
-) -> Option<Vec<Correction>> {
+) -> Option<Vec<Correction<'a>>> {
     let replacement = input_parts.to_vec();
     let replacement_index = input_parts.iter().position(|part| part == to_replace)?;
 
@@ -18,7 +18,7 @@ pub(crate) fn new_commands_from_suggestions<'a>(
                 if !cmd.is_empty() {
                     let mut new_command = replacement.clone();
                     *new_command.get_mut(replacement_index)? = cmd.to_owned();
-                    Some(Correction(new_command))
+                    Some(new_command.into())
                 } else {
                     None
                 }

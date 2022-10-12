@@ -17,7 +17,10 @@ impl Rule for CargoNoCommand {
         command.lowercase_output().contains("no such subcommand") && RE.is_match(command.output)
     }
 
-    fn generate_command_corrections(&self, command: &Command) -> Option<Vec<Correction>> {
+    fn generate_command_corrections<'a>(
+        &self,
+        command: &'a Command,
+    ) -> Option<Vec<Correction<'a>>> {
         let fix = RE
             .captures(command.output)
             .and_then(|captures| captures.get(1))

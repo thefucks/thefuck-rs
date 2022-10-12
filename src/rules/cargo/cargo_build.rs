@@ -11,7 +11,10 @@ impl Rule for Cargo {
         command.input == "cargo"
     }
 
-    fn generate_command_corrections(&self, _command: &Command) -> Option<Vec<Correction>> {
+    fn generate_command_corrections<'a>(
+        &self,
+        _command: &'a Command,
+    ) -> Option<Vec<Correction<'a>>> {
         Some(vec![vec!["cargo", "build"].into()])
     }
 }

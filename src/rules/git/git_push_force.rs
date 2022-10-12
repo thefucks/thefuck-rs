@@ -16,7 +16,10 @@ impl Rule for GitPushForce {
                 .contains("updates were rejected because the tip of your current branch is behind")
     }
 
-    fn generate_command_corrections(&self, command: &Command) -> Option<Vec<Correction>> {
+    fn generate_command_corrections<'a>(
+        &self,
+        command: &'a Command,
+    ) -> Option<Vec<Correction<'a>>> {
         let mut new_command = command.input_parts().to_vec();
         let push_index = new_command.iter().position(|part| part == "push")?;
         new_command.insert(push_index + 1, "--force-with-lease".to_owned());

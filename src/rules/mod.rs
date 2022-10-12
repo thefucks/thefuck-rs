@@ -38,5 +38,6 @@ pub(crate) trait Rule: Send + Sync {
 
     /// Generates a list of command corrections for a command. This is only called if `matches`
     /// returns true.
-    fn generate_command_corrections(&self, command: &Command) -> Option<Vec<Correction>>;
+    fn generate_command_corrections<'a>(&self, command: &'a Command)
+        -> Option<Vec<Correction<'a>>>;
 }

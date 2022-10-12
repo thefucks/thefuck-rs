@@ -21,7 +21,10 @@ impl Rule for GitPushSetUpstream {
         command.input_parts().iter().any(|part| part == "push") && RE.is_match(command.output)
     }
 
-    fn generate_command_corrections(&self, command: &Command) -> Option<Vec<Correction>> {
+    fn generate_command_corrections<'a>(
+        &self,
+        command: &'a Command,
+    ) -> Option<Vec<Correction<'a>>> {
         let command_parts = command.input_parts();
         let mut new_command_parts = vec!["git", "push", SET_UPSTREAM_LONG_NAME];
 

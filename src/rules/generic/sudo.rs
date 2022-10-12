@@ -52,7 +52,10 @@ impl Rule for Sudo {
             .any(|pattern| lowercase_output.contains(pattern))
     }
 
-    fn generate_command_corrections(&self, command: &Command) -> Option<Vec<Correction>> {
+    fn generate_command_corrections<'a>(
+        &self,
+        command: &'a Command,
+    ) -> Option<Vec<Correction<'a>>> {
         let new_command = [&["sudo".to_owned()], command.input_parts()].concat();
         Some(vec![new_command.into()])
     }

@@ -18,7 +18,10 @@ impl Rule for Repetition {
         false
     }
 
-    fn generate_command_corrections(&self, command: &Command) -> Option<Vec<Correction>> {
+    fn generate_command_corrections<'a>(
+        &self,
+        command: &'a Command,
+    ) -> Option<Vec<Correction<'a>>> {
         if command.input_parts().len() < 2 {
             None
         } else {

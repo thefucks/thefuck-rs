@@ -25,7 +25,10 @@ impl Rule for GitCommandNotFound {
                 || DID_YOU_MEAN_RE.is_match(lowercase_output))
     }
 
-    fn generate_command_corrections(&self, command: &Command) -> Option<Vec<Correction>> {
+    fn generate_command_corrections<'a>(
+        &self,
+        command: &'a Command,
+    ) -> Option<Vec<Correction<'a>>> {
         let lowercase_output = command.lowercase_output();
 
         let incorrect_command = NOT_GIT_COMMAND_RE
