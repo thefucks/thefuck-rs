@@ -4,7 +4,7 @@ See more here: https://github.com/nvbn/thefuck/blob/5198b34f24ca4bc414a5bf1b0288
 */
 
 use crate::rules::Rule;
-use crate::{Command, Correction};
+use crate::{Command, Correction, SessionMetadata};
 use lazy_static::lazy_static;
 use regex::Regex;
 
@@ -24,6 +24,7 @@ impl Rule for GitCheckout {
     fn generate_command_corrections<'a>(
         &self,
         command: &'a Command,
+        _session_metadata: &'a SessionMetadata,
     ) -> Option<Vec<Correction<'a>>> {
         let mut replacement = command.input_parts().to_vec();
         let checkout_pos = replacement.iter().position(|p| p == "checkout")?;
@@ -34,14 +35,14 @@ impl Rule for GitCheckout {
 
 #[cfg(test)]
 mod tests {
-    use crate::command_corrections;
+    use crate::test_utils::basic_corrections;
 
     #[test]
     fn test_git_checkout() {
         assert_eq!(
-            command_corrections(
+            basic_corrections(
                 "git checkout some-branch",
-                "error: pathspec 'some-branch' did not match any file(s) known to git"
+                "error: pathspec 'some-branch' did not match any file(s) known to git",
             ),
             vec!["git checkout -b some-branch"]
         )

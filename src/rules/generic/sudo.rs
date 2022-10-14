@@ -4,7 +4,7 @@ See more here: https://github.com/nvbn/thefuck/blob/5198b34f24ca4bc414a5bf1b0288
 */
 
 use crate::rules::Rule;
-use crate::{Command, Correction};
+use crate::{Command, Correction, SessionMetadata};
 
 pub(crate) struct Sudo;
 
@@ -55,6 +55,7 @@ impl Rule for Sudo {
     fn generate_command_corrections<'a>(
         &self,
         command: &'a Command,
+        _session_metadata: &'a SessionMetadata,
     ) -> Option<Vec<Correction<'a>>> {
         let new_command = [&["sudo".to_owned()], command.input_parts()].concat();
         Some(vec![new_command.into()])
@@ -63,12 +64,12 @@ impl Rule for Sudo {
 
 #[cfg(test)]
 mod tests {
-    use crate::command_corrections;
+    use crate::test_utils::basic_corrections;
 
     #[test]
     fn test_single_command() {
         assert_eq!(
-            command_corrections("rm file", "permission denied"),
+            basic_corrections("rm file", "permission denied"),
             vec!["sudo rm file"]
         )
     }

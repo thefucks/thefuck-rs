@@ -1,5 +1,5 @@
 use crate::rules::Rule;
-use crate::{Command, Correction};
+use crate::{Command, Correction, SessionMetadata};
 
 /*
 Corrects a command that looks like "cargo" to "cargo build".
@@ -14,6 +14,7 @@ impl Rule for Cargo {
     fn generate_command_corrections<'a>(
         &self,
         _command: &'a Command,
+        _session_metadata: &'a SessionMetadata,
     ) -> Option<Vec<Correction<'a>>> {
         Some(vec![vec!["cargo", "build"].into()])
     }
@@ -21,10 +22,10 @@ impl Rule for Cargo {
 
 #[cfg(test)]
 mod tests {
-    use crate::command_corrections;
+    use crate::test_utils::basic_corrections;
 
     #[test]
     fn test_cargo() {
-        assert_eq!(command_corrections("cargo", ""), vec!["cargo build"])
+        assert_eq!(basic_corrections("cargo", ""), vec!["cargo build"])
     }
 }

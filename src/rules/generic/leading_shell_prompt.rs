@@ -1,5 +1,5 @@
 use crate::rules::Rule;
-use crate::{Command, Correction};
+use crate::{Command, Correction, SessionMetadata};
 use lazy_static::lazy_static;
 use regex::Regex;
 
@@ -21,6 +21,7 @@ impl Rule for LeadingShellPrompt {
     fn generate_command_corrections<'a>(
         &self,
         command: &'a Command,
+        _session_metadata: &'a SessionMetadata,
     ) -> Option<Vec<Correction<'a>>> {
         Some(vec![command.input_parts()[1..].into()])
     }
@@ -28,12 +29,12 @@ impl Rule for LeadingShellPrompt {
 
 #[cfg(test)]
 mod tests {
-    use crate::command_corrections;
+    use crate::test_utils::basic_corrections;
 
     #[test]
     fn test_leading_shell_prompt() {
         assert_eq!(
-            command_corrections("$ git status", "zsh: command not found: $"),
+            basic_corrections("$ git status", "zsh: command not found: $"),
             vec!["git status"]
         );
     }

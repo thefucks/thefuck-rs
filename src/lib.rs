@@ -1,8 +1,11 @@
-use std::borrow::Cow;
+use std::{borrow::Cow, collections::HashSet};
 
 use itertools::Itertools;
 
 mod rules;
+
+#[cfg(test)]
+mod test_utils;
 
 /// A correction is a collection of shell command parts.
 /// Example: if the corrected command is `git commit -m "best fix"`, then the correction is
@@ -45,41 +48,47 @@ where
     }
 }
 
-/// Returns a list of command corrections given a command and its output. This is _heavily_ inspired
-/// by The Fuck (https://github.com/nvbn/thefuck).
-pub fn command_corrections(command_input: &str, command_output: &str) -> Vec<String> {
-    let rules = &*rules::RULES;
-    let command = Command::new(command_input, command_output);
+#[derive(PartialEq, Eq)]
+pub struct ExitCode(u8);
 
-    let command_name = match command.input_parts.first() {
-        None => return vec![],
-        Some(first) => first,
-    };
+impl ExitCode {
+    pub fn is_success(&self) -> bool {
+        self.0 == 0
+    }
 
-    rules
-        .get(command_name)
-        .into_iter()
-        .flatten()
-        .chain(rules::GENERIC_RULES.iter())
-        .filter_map(|rule| {
-            rule.matches(&command)
-                .then(|| rule.generate_command_corrections(&command))
-                .flatten()
-        })
-        .flatten()
-        .map(|correction| correction.to_command_string())
-        .collect()
+    pub fn is_error(&self) -> bool {
+        !self.is_success()
+    }
+
+    pub fn raw(&self) -> u8 {
+        self.0
+    }
 }
 
-struct Command<'a> {
+impl From<u8> for ExitCode {
+    fn from(code: u8) -> Self {
+        ExitCode(code)
+    }
+}
+
+/// A Command represents a shell command that the user executed along
+/// with its metadata. This is used to determine which corrections
+/// make sense in the context of the command.
+pub struct Command<'a> {
     input: &'a str,
     output: &'a str,
+
+    /// TODO: by default, a rule should only be run if the command failed.
+    /// Rules that should run if a command _succeeded_ should have to opt-in.
+    #[allow(dead_code)]
+    exit_code: ExitCode,
+
     lowercase_output: String,
     input_parts: Vec<String>,
 }
 
 impl<'a> Command<'a> {
-    pub fn new(input: &'a str, output: &'a str) -> Self {
+    pub fn new(input: &'a str, output: &'a str, exit_code: ExitCode) -> Self {
         // TODO: We need to re-escape multiword parts in the input after splitting. Thefuck has a
         // terribly hacky way of doing this here: https://github.com/nvbn/thefuck/blob/4c7479b3adcf8715a93d0c48e1ece83a35cda50d/thefuck/shells/generic.py#L87
         let input_parts = shlex::split(input).unwrap_or_default();
@@ -90,6 +99,7 @@ impl<'a> Command<'a> {
             output,
             lowercase_output,
             input_parts,
+            exit_code,
         }
     }
 
@@ -99,5 +109,68 @@ impl<'a> Command<'a> {
 
     pub fn lowercase_output(&self) -> &str {
         self.lowercase_output.as_str()
+    }
+}
+
+type AliasName<'a> = &'a str;
+type ExecutableName<'a> = &'a str;
+type FunctionName<'a> = &'a str;
+
+/// TODO: add support for shell type and user's history (with a limit?)
+#[derive(Default)]
+struct SessionMetadata<'a> {
+    pub aliases: HashSet<AliasName<'a>>,
+    pub executables: HashSet<ExecutableName<'a>>,
+    pub functions: HashSet<FunctionName<'a>>,
+}
+
+/// A CommandCorrector is a wrapper around the main `correct_command` API
+/// so that clients can set any extra metadata (if available) that they have
+/// so that we can surface more intelligent corrections.
+#[derive(Default)]
+pub struct CommandCorrector<'a> {
+    session_metadata: SessionMetadata<'a>,
+}
+
+impl<'a> CommandCorrector<'a> {
+    pub fn new() -> Self {
+        Default::default()
+    }
+
+    /// Returns a list of command corrections given a command. This is _heavily_ inspired
+    /// by The Fuck (https://github.com/nvbn/thefuck).
+    pub fn correct_command(&self, command: Command) -> Vec<String> {
+        let rules = &*rules::RULES;
+
+        let command_name = match command.input_parts.first() {
+            None => return vec![],
+            Some(first) => first,
+        };
+
+        rules
+            .get(command_name)
+            .into_iter()
+            .flatten()
+            .chain(rules::GENERIC_RULES.iter())
+            .filter_map(|rule| {
+                rule.matches(&command)
+                    .then(|| rule.generate_command_corrections(&command, &self.session_metadata))
+                    .flatten()
+            })
+            .flatten()
+            .map(|correction| correction.to_command_string())
+            .collect()
+    }
+
+    pub fn set_aliases(&mut self, aliases: impl Iterator<Item = AliasName<'a>>) {
+        self.session_metadata.aliases = HashSet::from_iter(aliases);
+    }
+
+    pub fn set_functions(&mut self, functions: impl Iterator<Item = FunctionName<'a>>) {
+        self.session_metadata.functions = HashSet::from_iter(functions);
+    }
+
+    pub fn set_executables(&mut self, executables: impl Iterator<Item = ExecutableName<'a>>) {
+        self.session_metadata.executables = HashSet::from_iter(executables);
     }
 }

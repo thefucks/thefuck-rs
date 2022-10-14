@@ -1,5 +1,5 @@
 use crate::rules::Rule;
-use crate::{Command, Correction};
+use crate::{Command, Correction, SessionMetadata};
 
 /*
 Fixes a git push command that actually requires a "--force-with-lease".
@@ -19,6 +19,7 @@ impl Rule for GitPushForce {
     fn generate_command_corrections<'a>(
         &self,
         command: &'a Command,
+        _session_metadata: &'a SessionMetadata,
     ) -> Option<Vec<Correction<'a>>> {
         let mut new_command = command.input_parts().to_vec();
         let push_index = new_command.iter().position(|part| part == "push")?;
@@ -29,12 +30,12 @@ impl Rule for GitPushForce {
 
 #[cfg(test)]
 mod tests {
-    use crate::command_corrections;
+    use crate::test_utils::basic_corrections;
 
     #[test]
     fn test_git_push_force() {
         assert_eq!(
-            command_corrections(
+            basic_corrections(
                 "git push some-other-arg",
                 "To github.com:org/repo.git
                   ! [rejected]        branch/name -> branch/name (non-fast-forward)

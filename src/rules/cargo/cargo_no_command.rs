@@ -1,5 +1,5 @@
 use crate::rules::Rule;
-use crate::{Command, Correction};
+use crate::{Command, Correction, SessionMetadata};
 use lazy_static::lazy_static;
 use regex::Regex;
 
@@ -20,6 +20,7 @@ impl Rule for CargoNoCommand {
     fn generate_command_corrections<'a>(
         &self,
         command: &'a Command,
+        _session_metadata: &'a SessionMetadata,
     ) -> Option<Vec<Correction<'a>>> {
         let fix = RE
             .captures(command.output)
@@ -35,16 +36,16 @@ impl Rule for CargoNoCommand {
 
 #[cfg(test)]
 mod tests {
-    use crate::command_corrections;
+    use crate::test_utils::basic_corrections;
 
     #[test]
     fn test_cargo_incorrect_command() {
         assert_eq!(
-            command_corrections(
+            basic_corrections(
                 "cargo buildd",
                 "error: no such subcommand: `buildd`
 
-	Did you mean `build`?"
+        Did you mean `build`?"
             ),
             vec!["cargo build"]
         )

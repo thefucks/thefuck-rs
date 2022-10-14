@@ -30,11 +30,11 @@ pub(crate) fn new_commands_from_suggestions<'a>(
 #[cfg(test)]
 mod test {
     use crate::rules::util::new_commands_from_suggestions;
-    use crate::Command;
+    use crate::{Command, ExitCode};
 
     #[test]
     fn test_new_commands_from_suggestions() {
-        let command = Command::new("git p", "bogus");
+        let command = Command::new("git p", "bogus", ExitCode(0));
         let suggestions = ["push", "pull"];
         let corrections = new_commands_from_suggestions(suggestions, command.input_parts(), "p");
         assert_eq!(
@@ -45,7 +45,7 @@ mod test {
 
     #[test]
     fn test_new_commands_from_suggestions_with_none_to_replace() {
-        let command = Command::new("git p", "bogus");
+        let command = Command::new("git p", "bogus", ExitCode(0));
         let suggestions = ["push", "pull"];
         assert_eq!(
             new_commands_from_suggestions(suggestions, command.input_parts(), "w"),

@@ -1,6 +1,6 @@
 use crate::rules::util::new_commands_from_suggestions;
 use crate::rules::Rule;
-use crate::{Command, Correction};
+use crate::{Command, Correction, SessionMetadata};
 use lazy_static::lazy_static;
 use regex::Regex;
 
@@ -28,6 +28,7 @@ impl Rule for GitCommandNotFound {
     fn generate_command_corrections<'a>(
         &self,
         command: &'a Command,
+        _session_metadata: &'a SessionMetadata,
     ) -> Option<Vec<Correction<'a>>> {
         let lowercase_output = command.lowercase_output();
 
@@ -66,12 +67,12 @@ impl Rule for GitCommandNotFound {
 
 #[cfg(test)]
 mod tests {
-    use crate::command_corrections;
+    use crate::test_utils::basic_corrections;
 
     #[test]
     fn test_git_most_similar_command() {
         assert_eq!(
-            command_corrections(
+            basic_corrections(
                 "git psuh --force-with-lease",
                 "git: 'psuh' is not a git command. See 'git --help'.
 
@@ -86,7 +87,7 @@ mod tests {
     #[test]
     fn test_git_most_similar_commands() {
         assert_eq!(
-            command_corrections(
+            basic_corrections(
                 "git st",
                 "git: 'st' is not a git command. See 'git --help'.
 
@@ -105,7 +106,7 @@ mod tests {
     #[test]
     fn test_git_did_you_mean() {
         assert_eq!(
-            command_corrections(
+            basic_corrections(
                 "git st",
                 "git: 'st' is not a git command. See 'git --help'.
 

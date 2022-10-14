@@ -1,5 +1,5 @@
 use crate::rules::Rule;
-use crate::{Command, Correction};
+use crate::{Command, Correction, SessionMetadata};
 use lazy_static::lazy_static;
 use regex::Regex;
 
@@ -24,6 +24,7 @@ impl Rule for GitPushSetUpstream {
     fn generate_command_corrections<'a>(
         &self,
         command: &'a Command,
+        _session_metadata: &'a SessionMetadata,
     ) -> Option<Vec<Correction<'a>>> {
         let command_parts = command.input_parts();
         let mut new_command_parts = vec!["git", "push", SET_UPSTREAM_LONG_NAME];
@@ -60,12 +61,12 @@ impl Rule for GitPushSetUpstream {
 
 #[cfg(test)]
 mod tests {
-    use crate::command_corrections;
+    use crate::test_utils::basic_corrections;
 
     #[test]
     fn test_git_push_incorrect_command() {
         assert_eq!(
-            command_corrections(
+            basic_corrections(
                 "git push",
                 "fatal: The current branch random has no upstream branch.
                 To push the current branch and set the remote as upstream, use
@@ -80,7 +81,7 @@ mod tests {
     #[test]
     fn test_git_push_incorrect_command_with_more_output() {
         assert_eq!(
-            command_corrections(
+            basic_corrections(
                 "git push",
                 "fatal: The current branch random has no upstream branch.
                 To push the current branch and set the remote as upstream, use
@@ -97,7 +98,7 @@ mod tests {
     #[test]
     fn test_git_push_incorrect_command_with_options() {
         assert_eq!(
-            command_corrections(
+            basic_corrections(
                 "git push --force-with-lease -u",
                 "fatal: The current branch random has no upstream branch.
                 To push the current branch and set the remote as upstream, use

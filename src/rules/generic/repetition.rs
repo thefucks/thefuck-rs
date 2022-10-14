@@ -1,5 +1,5 @@
 use crate::rules::Rule;
-use crate::{Command, Correction};
+use crate::{Command, Correction, SessionMetadata};
 
 /*
 Fixes error for commands that accidentally repeat the top-level command, e.g. "git git status".
@@ -21,6 +21,7 @@ impl Rule for Repetition {
     fn generate_command_corrections<'a>(
         &self,
         command: &'a Command,
+        _session_metadata: &'a SessionMetadata,
     ) -> Option<Vec<Correction<'a>>> {
         if command.input_parts().len() < 2 {
             None
@@ -32,12 +33,12 @@ impl Rule for Repetition {
 
 #[cfg(test)]
 mod tests {
-    use crate::command_corrections;
+    use crate::test_utils::basic_corrections;
 
     #[test]
     fn test_repetitions() {
         assert_eq!(
-            command_corrections("git git status", "some random error"),
+            basic_corrections("git git status", "some random error"),
             vec!["git status"]
         )
     }
@@ -46,7 +47,7 @@ mod tests {
     fn test_repetitions_with_one_part() {
         let empty_corrections: Vec<String> = Vec::new();
         assert_eq!(
-            command_corrections("git", "some random error"),
+            basic_corrections("git", "some random error"),
             empty_corrections
         )
     }
