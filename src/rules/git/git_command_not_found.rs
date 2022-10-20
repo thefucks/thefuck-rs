@@ -121,4 +121,18 @@ mod tests {
             vec!["git status", "git reset", "git s", "git stage", "git stash"]
         )
     }
+
+    #[test]
+    fn test_git_commit() {
+        assert_eq!(
+            basic_corrections(
+                r#"git comit -m "my fancy message""#,
+                "git: 'comit' is not a git command. See 'git --help'.
+                The most similar command is
+                    commit
+                "
+            ),
+            vec![r#"git commit -m "my fancy message""#]
+        )
+    }
 }
