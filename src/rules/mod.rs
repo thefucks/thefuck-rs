@@ -1,4 +1,5 @@
 mod cargo;
+mod cat;
 mod generic;
 mod git;
 
@@ -11,7 +12,8 @@ use std::{collections::HashMap, sync::Arc};
 lazy_static! {
     pub(crate) static ref RULES: Rules = Rules(HashMap::from([
         cargo::rules_for_command(),
-        git::rules_for_command()
+        git::rules_for_command(),
+        cat::rules_for_command(),
     ]));
     pub(crate) static ref GENERIC_RULES: Vec<Arc<dyn Rule>> = generic::rules();
 }
