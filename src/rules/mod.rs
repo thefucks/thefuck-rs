@@ -34,7 +34,7 @@ pub(crate) trait Rule: Send + Sync {
     }
 
     /// Whether the command matches this rule.
-    fn matches(&self, command: &Command) -> bool;
+    fn matches(&self, command: &Command, session_metadata: &SessionMetadata) -> bool;
 
     /// Generates a list of command corrections for a command. This is only called if `matches`
     /// returns true.

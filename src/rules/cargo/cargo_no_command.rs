@@ -13,7 +13,7 @@ See more here: https://github.com/nvbn/thefuck/blob/5198b34f24ca4bc414a5bf1b0288
 */
 pub(crate) struct CargoNoCommand;
 impl Rule for CargoNoCommand {
-    fn matches(&self, command: &Command) -> bool {
+    fn matches(&self, command: &Command, _session_metadata: &SessionMetadata) -> bool {
         command.lowercase_output().contains("no such subcommand") && RE.is_match(command.output)
     }
 

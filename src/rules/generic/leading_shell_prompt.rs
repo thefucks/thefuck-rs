@@ -14,7 +14,7 @@ See more here: https://github.com/nvbn/thefuck/blob/5198b34f24ca4bc414a5bf1b0288
 */
 pub(crate) struct LeadingShellPrompt;
 impl Rule for LeadingShellPrompt {
-    fn matches(&self, command: &Command) -> bool {
+    fn matches(&self, command: &Command, _session_metadata: &SessionMetadata) -> bool {
         command.output.to_lowercase().contains("command not found") && RE.is_match(command.input)
     }
 

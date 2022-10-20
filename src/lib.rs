@@ -153,7 +153,7 @@ impl<'a> CommandCorrector<'a> {
             .flatten()
             .chain(rules::GENERIC_RULES.iter())
             .filter_map(|rule| {
-                rule.matches(&command)
+                rule.matches(&command, &self.session_metadata)
                     .then(|| rule.generate_command_corrections(&command, &self.session_metadata))
                     .flatten()
             })

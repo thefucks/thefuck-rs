@@ -10,7 +10,7 @@ impl Rule for Repetition {
     // TODO: once Command carries contextual info (like exit codes), we should
     // only run this rule if the command failed (since there could be commands
     // with subcommands that have the same name as the top-level command).
-    fn matches(&self, command: &Command) -> bool {
+    fn matches(&self, command: &Command, _session_metadata: &SessionMetadata) -> bool {
         let input_parts = command.input_parts();
         if let (Some(first_part), Some(second_part)) = (input_parts.get(0), input_parts.get(1)) {
             return first_part == second_part;

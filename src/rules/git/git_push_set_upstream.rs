@@ -17,7 +17,7 @@ See more here: https://github.com/nvbn/thefuck/blob/5198b34f24ca4bc414a5bf1b0288
 */
 pub(crate) struct GitPushSetUpstream;
 impl Rule for GitPushSetUpstream {
-    fn matches(&self, command: &Command) -> bool {
+    fn matches(&self, command: &Command, _session_metadata: &SessionMetadata) -> bool {
         command.input_parts().iter().any(|part| part == "push") && RE.is_match(command.output)
     }
 

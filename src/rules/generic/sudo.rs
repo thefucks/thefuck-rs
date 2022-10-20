@@ -40,7 +40,7 @@ static PATTERNS: &[&str] = &[
 ];
 
 impl Rule for Sudo {
-    fn matches(&self, command: &Command) -> bool {
+    fn matches(&self, command: &Command, _session_metadata: &SessionMetadata) -> bool {
         // If user already tried sudo, no point in suggesting it again.
         if let Some("sudo") = command.input_parts().first().map(String::as_str) {
             return false;

@@ -16,7 +16,7 @@ lazy_static! {
 }
 
 impl Rule for GitCheckout {
-    fn matches(&self, command: &Command) -> bool {
+    fn matches(&self, command: &Command, _session_metadata: &SessionMetadata) -> bool {
         command.input_parts().iter().any(|part| part == "checkout")
             && RE.is_match(command.lowercase_output())
     }

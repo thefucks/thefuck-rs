@@ -18,7 +18,7 @@ See more here: https://github.com/nvbn/thefuck/blob/5198b34f24ca4bc414a5bf1b0288
 */
 pub(crate) struct GitCommandNotFound;
 impl Rule for GitCommandNotFound {
-    fn matches(&self, command: &Command) -> bool {
+    fn matches(&self, command: &Command, _session_metadata: &SessionMetadata) -> bool {
         let lowercase_output = command.lowercase_output();
         NOT_GIT_COMMAND_RE.is_match(lowercase_output)
             && (MOST_SIMILAR_RE.is_match(lowercase_output)
