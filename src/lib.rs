@@ -118,59 +118,50 @@ type FunctionName<'a> = &'a str;
 
 /// TODO: add support for shell type and user's history (with a limit?)
 #[derive(Default)]
-struct SessionMetadata<'a> {
-    pub aliases: HashSet<AliasName<'a>>,
-    pub executables: HashSet<ExecutableName<'a>>,
-    pub functions: HashSet<FunctionName<'a>>,
+pub struct SessionMetadata<'a> {
+    aliases: HashSet<AliasName<'a>>,
+    executables: HashSet<ExecutableName<'a>>,
+    functions: HashSet<FunctionName<'a>>,
 }
 
-/// A CommandCorrector is a wrapper around the main `correct_command` API
-/// so that clients can set any extra metadata (if available) that they have
-/// so that we can surface more intelligent corrections.
-#[derive(Default)]
-pub struct CommandCorrector<'a> {
-    session_metadata: SessionMetadata<'a>,
-}
-
-impl<'a> CommandCorrector<'a> {
+impl<'a> SessionMetadata<'a> {
     pub fn new() -> Self {
         Default::default()
     }
 
-    /// Returns a list of command corrections given a command. This is _heavily_ inspired
-    /// by The Fuck (https://github.com/nvbn/thefuck).
-    pub fn correct_command(&self, command: Command) -> Vec<String> {
-        let rules = &*rules::RULES;
-
-        let command_name = match command.input_parts.first() {
-            None => return vec![],
-            Some(first) => first,
-        };
-
-        rules
-            .get(command_name)
-            .into_iter()
-            .flatten()
-            .chain(rules::GENERIC_RULES.iter())
-            .filter_map(|rule| {
-                rule.matches(&command, &self.session_metadata)
-                    .then(|| rule.generate_command_corrections(&command, &self.session_metadata))
-                    .flatten()
-            })
-            .flatten()
-            .map(|correction| correction.to_command_string())
-            .collect()
-    }
-
     pub fn set_aliases(&mut self, aliases: impl Iterator<Item = AliasName<'a>>) {
-        self.session_metadata.aliases = HashSet::from_iter(aliases);
+        self.aliases = HashSet::from_iter(aliases);
     }
-
     pub fn set_functions(&mut self, functions: impl Iterator<Item = FunctionName<'a>>) {
-        self.session_metadata.functions = HashSet::from_iter(functions);
+        self.functions = HashSet::from_iter(functions);
     }
 
     pub fn set_executables(&mut self, executables: impl Iterator<Item = ExecutableName<'a>>) {
-        self.session_metadata.executables = HashSet::from_iter(executables);
+        self.executables = HashSet::from_iter(executables);
     }
+}
+
+/// Returns a list of command corrections given a command. This is _heavily_ inspired
+/// by The Fuck (https://github.com/nvbn/thefuck).
+pub fn correct_command(command: Command, session_metadata: &SessionMetadata) -> Vec<String> {
+    let rules = &*rules::RULES;
+
+    let command_name = match command.input_parts.first() {
+        None => return vec![],
+        Some(first) => first,
+    };
+
+    rules
+        .get(command_name)
+        .into_iter()
+        .flatten()
+        .chain(rules::GENERIC_RULES.iter())
+        .filter_map(|rule| {
+            rule.matches(&command, session_metadata)
+                .then(|| rule.generate_command_corrections(&command, session_metadata))
+                .flatten()
+        })
+        .flatten()
+        .map(|correction| correction.to_command_string())
+        .collect()
 }
