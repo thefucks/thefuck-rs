@@ -49,7 +49,7 @@ where
 }
 
 #[derive(PartialEq, Eq)]
-pub struct ExitCode(u8);
+pub struct ExitCode(usize);
 
 impl ExitCode {
     pub fn is_success(&self) -> bool {
@@ -60,13 +60,13 @@ impl ExitCode {
         !self.is_success()
     }
 
-    pub fn raw(&self) -> u8 {
+    pub fn raw(&self) -> usize {
         self.0
     }
 }
 
-impl From<u8> for ExitCode {
-    fn from(code: u8) -> Self {
+impl From<usize> for ExitCode {
+    fn from(code: usize) -> Self {
         ExitCode(code)
     }
 }
