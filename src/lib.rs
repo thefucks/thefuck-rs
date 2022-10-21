@@ -139,6 +139,12 @@ impl<'a> SessionMetadata<'a> {
     pub fn set_executables(&mut self, executables: impl Iterator<Item = ExecutableName<'a>>) {
         self.executables = HashSet::from_iter(executables);
     }
+
+    fn is_top_level_command(&self, command: &str) -> bool {
+        self.executables.contains(command)
+            || self.aliases.contains(command)
+            || self.functions.contains(command)
+    }
 }
 
 /// Returns a list of command corrections given a command. This is _heavily_ inspired
