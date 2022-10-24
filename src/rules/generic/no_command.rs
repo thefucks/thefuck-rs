@@ -1,3 +1,4 @@
+use crate::rules::util::new_commands_from_suggestions;
 use crate::rules::Rule;
 use crate::{Command, Correction, SessionMetadata};
 use difflib::get_close_matches;
@@ -25,33 +26,41 @@ impl Rule for NoCommand {
         })
     }
 
-    // TODO: also use history and shell builtins once they're available
-    // in session metadata
     fn generate_command_corrections<'a>(
         &self,
         command: &'a Command,
         session_metadata: &'a SessionMetadata,
     ) -> Option<Vec<Correction<'a>>> {
         let to_fix = command.input_parts().first()?.as_str();
-        let words = session_metadata
-            .aliases
-            .iter()
-            .chain(session_metadata.executables.iter())
-            .chain(session_metadata.functions.iter())
-            .copied()
-            .collect_vec();
 
-        let matches = get_close_matches(
+        // Get a match from the top level commands
+        let top_level_commands = session_metadata.top_level_commands().collect_vec();
+        let top_level_command_fix = get_close_matches(
             to_fix,
-            words,
+            top_level_commands,
             NUM_MATCHES_DESIRED_PER_GROUP,
             MATCH_SCORE_CUTOFF,
         );
-        let fix = matches.first()?;
 
-        let mut replacement = command.input_parts().to_vec();
-        *replacement.first_mut()? = fix.to_string();
-        Some(vec![replacement.into()])
+        // Get a match from the shell history
+        let history_commands = session_metadata
+            .top_level_commands_from_history()
+            .filter(|s| *s != to_fix)
+            .collect_vec();
+        let history_command_match = get_close_matches(
+            to_fix,
+            history_commands,
+            NUM_MATCHES_DESIRED_PER_GROUP,
+            MATCH_SCORE_CUTOFF,
+        );
+        let history_command_fix = history_command_match;
+
+        // Favor the history match over the top level command match
+        let suggestions = history_command_fix
+            .into_iter()
+            .filter(|c| session_metadata.is_top_level_command(c))
+            .chain(top_level_command_fix);
+        new_commands_from_suggestions(suggestions, command.input_parts(), to_fix)
     }
 }
 
@@ -61,6 +70,8 @@ mod tests {
     const EXECUTABLES: &[&str] = &["git", "cargo"];
     const ALIASES: &[&str] = &["foo", "bar", "gt"];
     const FUNCTIONS: &[&str] = &["func", "meth"];
+    const BUILTINS: &[&str] = &["print"];
+    const HISTORY: &[&str] = &["gitz random", "git cmd"];
 
     #[test]
     fn test_executable_correction() {
@@ -90,13 +101,37 @@ mod tests {
     }
 
     #[test]
+    fn test_shell_builtins() {
+        let command = Command::new("pirnt -f", "command not found", 127.into());
+        let mut metadata = SessionMetadata::new();
+        metadata.set_builtins(BUILTINS.iter().copied());
+
+        assert_eq!(correct_command(command, &metadata), vec!["print -f"]);
+    }
+
+    #[test]
+    fn test_history() {
+        let command = Command::new("gits commit", "command not found", 127.into());
+        let mut metadata = SessionMetadata::new();
+        metadata.set_executables(EXECUTABLES.iter().copied());
+        metadata.set_history(HISTORY.iter().copied());
+
+        assert_eq!(correct_command(command, &metadata), vec!["git commit"]);
+    }
+
+    #[test]
     fn test_all() {
         let command = Command::new("gti commit", "command not found", 127.into());
         let mut metadata = SessionMetadata::new();
         metadata.set_executables(EXECUTABLES.iter().copied());
         metadata.set_aliases(ALIASES.iter().copied());
         metadata.set_functions(FUNCTIONS.iter().copied());
+        metadata.set_builtins(BUILTINS.iter().copied());
+        metadata.set_history(HISTORY.iter().copied());
 
-        assert_eq!(correct_command(command, &metadata), vec!["gt commit"]);
+        assert_eq!(
+            correct_command(command, &metadata),
+            vec!["git commit", "gt commit"]
+        );
     }
 }

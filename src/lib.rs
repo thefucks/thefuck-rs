@@ -113,15 +113,20 @@ impl<'a> Command<'a> {
 }
 
 type AliasName<'a> = &'a str;
+type BuiltinName<'a> = &'a str;
 type ExecutableName<'a> = &'a str;
 type FunctionName<'a> = &'a str;
 
-/// TODO: add support for shell type and user's history (with a limit?)
+type HistoryItem<'a> = &'a str;
+
 #[derive(Default)]
 pub struct SessionMetadata<'a> {
     aliases: HashSet<AliasName<'a>>,
+    builtins: HashSet<BuiltinName<'a>>,
     executables: HashSet<ExecutableName<'a>>,
     functions: HashSet<FunctionName<'a>>,
+
+    history: Vec<HistoryItem<'a>>,
 }
 
 impl<'a> SessionMetadata<'a> {
@@ -129,21 +134,48 @@ impl<'a> SessionMetadata<'a> {
         Default::default()
     }
 
-    pub fn set_aliases(&mut self, aliases: impl Iterator<Item = AliasName<'a>>) {
+    pub fn set_aliases(&mut self, aliases: impl IntoIterator<Item = AliasName<'a>>) {
         self.aliases = HashSet::from_iter(aliases);
     }
-    pub fn set_functions(&mut self, functions: impl Iterator<Item = FunctionName<'a>>) {
+
+    pub fn set_builtins(&mut self, builtins: impl IntoIterator<Item = BuiltinName<'a>>) {
+        self.builtins = HashSet::from_iter(builtins);
+    }
+
+    pub fn set_functions(&mut self, functions: impl IntoIterator<Item = FunctionName<'a>>) {
         self.functions = HashSet::from_iter(functions);
     }
 
-    pub fn set_executables(&mut self, executables: impl Iterator<Item = ExecutableName<'a>>) {
+    pub fn set_executables(&mut self, executables: impl IntoIterator<Item = ExecutableName<'a>>) {
         self.executables = HashSet::from_iter(executables);
+    }
+
+    pub fn set_history(&mut self, history: impl IntoIterator<Item = HistoryItem<'a>>) {
+        self.history = Vec::from_iter(history);
     }
 
     fn is_top_level_command(&self, command: &str) -> bool {
         self.executables.contains(command)
             || self.aliases.contains(command)
             || self.functions.contains(command)
+            || self.builtins.contains(command)
+    }
+
+    fn top_level_commands(&self) -> impl Iterator<Item = &str> {
+        self.executables
+            .iter()
+            .chain(self.aliases.iter())
+            .chain(self.functions.iter())
+            .chain(self.builtins.iter())
+            .copied()
+    }
+
+    /// Returns the command name for each history item
+    /// e.g. `git checkout` => `git`
+    fn top_level_commands_from_history(&self) -> impl Iterator<Item = &str> {
+        self.history
+            .iter()
+            .filter_map(|s| s.split_whitespace().next())
     }
 }
 
@@ -169,5 +201,6 @@ pub fn correct_command(command: Command, session_metadata: &SessionMetadata) -> 
         })
         .flatten()
         .map(|correction| correction.to_command_string())
+        .unique()
         .collect()
 }
