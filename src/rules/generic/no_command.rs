@@ -42,24 +42,23 @@ impl Rule for NoCommand {
             MATCH_SCORE_CUTOFF,
         );
 
-        // Get a match from the shell history
+        // Get a match from the shell history. But don't try to match against
+        // things that aren't even top level commands.
         let history_commands = session_metadata
             .top_level_commands_from_history()
-            .filter(|s| *s != to_fix)
+            .filter(|s| *s != to_fix && session_metadata.is_top_level_command(s))
             .collect_vec();
-        let history_command_match = get_close_matches(
+        let history_command_fix = get_close_matches(
             to_fix,
             history_commands,
             NUM_MATCHES_DESIRED_PER_GROUP,
             MATCH_SCORE_CUTOFF,
         );
-        let history_command_fix = history_command_match;
 
-        // Favor the history match over the top level command match
-        let suggestions = history_command_fix
-            .into_iter()
-            .filter(|c| session_metadata.is_top_level_command(c))
-            .chain(top_level_command_fix);
+        // Favor the history match over the top level command match. We use
+        // the history as an ordering trick to suggest something that's more relevant
+        // to the user.
+        let suggestions = history_command_fix.into_iter().chain(top_level_command_fix);
         new_commands_from_suggestions(suggestions, command.input_parts(), to_fix)
     }
 }
@@ -71,7 +70,7 @@ mod tests {
     const ALIASES: &[&str] = &["foo", "bar", "gt"];
     const FUNCTIONS: &[&str] = &["func", "meth"];
     const BUILTINS: &[&str] = &["print"];
-    const HISTORY: &[&str] = &["gitz random", "git cmd"];
+    const HISTORY: &[&str] = &["gitz random", "gtii cmd", "git cmd"];
 
     #[test]
     fn test_executable_correction() {
