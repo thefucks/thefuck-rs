@@ -1,17 +1,7 @@
-use crate::rules::util::new_commands_from_suggestions;
+use crate::rules::util::{get_single_closest_match, new_commands_from_suggestions};
 use crate::rules::Rule;
 use crate::{Command, Correction, SessionMetadata};
-use difflib::get_close_matches;
 use itertools::Itertools;
-
-// TODO: eventually make this configurable
-/// The score here refers to the ratio used by difflib.
-const MATCH_SCORE_CUTOFF: f32 = 0.6;
-
-/// We only want one match per group, where we have two groups
-/// - Group 1: executables, functions, aliases, builtins
-/// - Group 2: commands from history
-const NUM_MATCHES_DESIRED_PER_GROUP: usize = 1;
 
 /// The NoCommand rule is meant to address failures when the first word
 /// in the command is not recognized by the shell.
@@ -26,6 +16,9 @@ impl Rule for NoCommand {
         })
     }
 
+    /// We want one match per group, where we have two groups
+    /// - Group 1: executables, functions, aliases, builtins
+    /// - Group 2: commands from history
     fn generate_command_corrections<'a>(
         &self,
         command: &'a Command,
@@ -35,12 +28,7 @@ impl Rule for NoCommand {
 
         // Get a match from the top level commands
         let top_level_commands = session_metadata.top_level_commands().collect_vec();
-        let top_level_command_fix = get_close_matches(
-            to_fix,
-            top_level_commands,
-            NUM_MATCHES_DESIRED_PER_GROUP,
-            MATCH_SCORE_CUTOFF,
-        );
+        let top_level_command_fix = get_single_closest_match(to_fix, top_level_commands);
 
         // Get a match from the shell history. But don't try to match against
         // things that aren't even top level commands.
@@ -48,12 +36,7 @@ impl Rule for NoCommand {
             .top_level_commands_from_history()
             .filter(|s| *s != to_fix && session_metadata.is_top_level_command(s))
             .collect_vec();
-        let history_command_fix = get_close_matches(
-            to_fix,
-            history_commands,
-            NUM_MATCHES_DESIRED_PER_GROUP,
-            MATCH_SCORE_CUTOFF,
-        );
+        let history_command_fix = get_single_closest_match(to_fix, history_commands);
 
         // Favor the history match over the top level command match. We use
         // the history as an ordering trick to suggest something that's more relevant
