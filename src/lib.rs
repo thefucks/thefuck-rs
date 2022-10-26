@@ -24,15 +24,36 @@ enum Correction<'a> {
     /// Note: although translating into a Correction seems expensive (using Vecs), very few corrections
     /// are actually computed (only for matching top-level command and if the rule `matches`)
     CommandParts(Vec<Cow<'a, str>>),
+
+    // TODO: This is a temporary solution to a better escaping strategy
+    /// The `And` variant is used for corrections that involve two other
+    /// Corrections, meant to be combined with the shell AND operator. For example,
+    /// the command "mkdir -p dir && cd dir" can be expressed with an And variant like so:
+    /// And(CommandParts(["mkdir", "-p", "dir"]), Command("cd dir"))
+    And(Box<Correction<'a>>, Box<Correction<'a>>),
 }
 
 impl<'a> Correction<'a> {
-    fn to_command_string(&self) -> String {
+    fn to_command_string(&self, shell: &Shell) -> String {
         use Correction::*;
         match self {
+            // base cases
             Command(str) => str.to_string(),
             CommandParts(parts) => shlex::join(parts.iter().map(|part| part.as_ref())),
+
+            // recursive case
+            And(first, second) => {
+                let first_str = first.to_command_string(shell);
+                let second_str = second.to_command_string(shell);
+                [first_str.as_str(), shell.and(), second_str.as_str()].join(" ")
+            }
         }
+    }
+
+    /// Utility to create the And variant (without fussing with Box at callsites)
+    #[allow(dead_code)]
+    fn and(first: impl Into<Correction<'a>>, second: impl Into<Correction<'a>>) -> Self {
+        Correction::And(Box::new(first.into()), Box::new(second.into()))
     }
 }
 
@@ -96,6 +117,30 @@ impl From<usize> for ExitCode {
     }
 }
 
+/// The shells supported by this crate.
+pub enum Shell {
+    Bash,
+    Zsh,
+    Fish,
+}
+
+impl Shell {
+    #[allow(dead_code)]
+    fn and(&self) -> &'static str {
+        use Shell::*;
+        match self {
+            Bash | Zsh => "&&",
+            Fish => "and",
+        }
+    }
+}
+
+impl Default for Shell {
+    fn default() -> Self {
+        Shell::Bash
+    }
+}
+
 /// A Command represents a shell command that the user executed along
 /// with its metadata. This is used to determine which corrections
 /// make sense in the context of the command.
@@ -146,6 +191,8 @@ type HistoryItem<'a> = &'a str;
 
 #[derive(Default)]
 pub struct SessionMetadata<'a> {
+    shell: Shell,
+
     aliases: HashSet<AliasName<'a>>,
     builtins: HashSet<BuiltinName<'a>>,
     executables: HashSet<ExecutableName<'a>>,
@@ -177,6 +224,10 @@ impl<'a> SessionMetadata<'a> {
 
     pub fn set_history(&mut self, history: impl IntoIterator<Item = HistoryItem<'a>>) {
         self.history = Vec::from_iter(history);
+    }
+
+    pub fn set_shell(&mut self, shell: Shell) {
+        self.shell = shell;
     }
 
     fn is_top_level_command(&self, command: &str) -> bool {
@@ -225,7 +276,7 @@ pub fn correct_command(command: Command, session_metadata: &SessionMetadata) -> 
                 .flatten()
         })
         .flatten()
-        .map(|correction| correction.to_command_string())
+        .map(|correction| correction.to_command_string(&session_metadata.shell))
         .unique()
         .collect()
 }
