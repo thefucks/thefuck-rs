@@ -7,30 +7,55 @@ mod rules;
 #[cfg(test)]
 mod test_utils;
 
-/// A correction is a collection of shell command parts.
-/// Example: if the corrected command is `git commit -m "best fix"`, then the correction is
-/// ["git", "commit", "-m", "best fix"]. Note that "best fix" is a single part. This is important
-/// as it guarantees the correct shell-escaped command is returned in `to_command_string`.
-/// Note: although translating into a Correction seems expensive (using Vecs), very few corrections
-/// are actually computed (only for matching top-level command and if the rule `matches`)
+/// A Correction could either be a fully formed command or a series
+/// of command parts that need to be combined to form a command.
 ///
 /// Note about Cow<str>: we use a Cow here since the string will either be a reference
 /// to one of the input parts, a static string, or a computed string over an input part.
 /// In the first two cases, a borrowed string suffices, but in the last case, we need an owned string.
 /// Using a Cow allows us to avoid `clone`s for the first two types of strings.
 #[derive(Debug, PartialEq)]
-struct Correction<'a>(pub Vec<Cow<'a, str>>);
+enum Correction<'a> {
+    Command(Cow<'a, str>),
+
+    /// Example: if the corrected command is `git commit -m "best fix"`, then the correction is
+    /// ["git", "commit", "-m", "best fix"]. Note that "best fix" is a single part. This is important
+    /// as it guarantees the correct shell-escaped command is returned in `to_command_string`.
+    /// Note: although translating into a Correction seems expensive (using Vecs), very few corrections
+    /// are actually computed (only for matching top-level command and if the rule `matches`)
+    CommandParts(Vec<Cow<'a, str>>),
+}
+
 impl<'a> Correction<'a> {
     fn to_command_string(&self) -> String {
-        shlex::join(self.0.iter().map(|part| part.as_ref()))
+        use Correction::*;
+        match self {
+            Command(str) => str.to_string(),
+            CommandParts(parts) => shlex::join(parts.iter().map(|part| part.as_ref())),
+        }
     }
 }
+
+// Note: need two separate From impl's because we
+// can't do From<T> where T: Cow<str> (compiler will complain
+// about conflicting with the other From impl's)
+impl<'a> From<String> for Correction<'a> {
+    fn from(command: String) -> Self {
+        Correction::Command(command.into())
+    }
+}
+impl<'a> From<&'a str> for Correction<'a> {
+    fn from(command: &'a str) -> Self {
+        Correction::Command(command.into())
+    }
+}
+
 impl<'a, T> From<Vec<T>> for Correction<'a>
 where
     T: Into<Cow<'a, str>>,
 {
     fn from(parts: Vec<T>) -> Self {
-        Correction(parts.into_iter().map(Into::into).collect_vec())
+        Correction::CommandParts(parts.into_iter().map(Into::into).collect_vec())
     }
 }
 impl<'a, T> From<&'a [T]> for Correction<'a>
@@ -38,7 +63,7 @@ where
     T: AsRef<str>,
 {
     fn from(parts: &'a [T]) -> Self {
-        Correction(
+        Correction::CommandParts(
             parts
                 .iter()
                 .map(AsRef::as_ref)
