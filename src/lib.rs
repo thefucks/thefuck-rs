@@ -257,6 +257,7 @@ impl<'a> SessionMetadata<'a> {
 
 /// Returns a list of command corrections given a command. This is _heavily_ inspired
 /// by The Fuck (https://github.com/nvbn/thefuck).
+// TODO: add tests for this function
 pub fn correct_command(command: Command, session_metadata: &SessionMetadata) -> Vec<String> {
     let rules = &*rules::RULES;
 
@@ -276,7 +277,10 @@ pub fn correct_command(command: Command, session_metadata: &SessionMetadata) -> 
                 .flatten()
         })
         .flatten()
-        .map(|correction| correction.to_command_string(&session_metadata.shell))
+        .filter_map(|correction| {
+            let cmd_string = correction.to_command_string(&session_metadata.shell);
+            (cmd_string != command.input).then_some(cmd_string)
+        })
         .unique()
         .collect()
 }
