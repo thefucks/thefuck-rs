@@ -2,6 +2,7 @@ mod cargo;
 mod cat;
 mod generic;
 mod git;
+mod java;
 
 mod util;
 
@@ -14,6 +15,7 @@ lazy_static! {
         cargo::rules_for_command(),
         git::rules_for_command(),
         cat::rules_for_command(),
+        java::rules_for_command(),
     ]));
     pub(crate) static ref GENERIC_RULES: Vec<Arc<dyn Rule>> = generic::rules();
 }
