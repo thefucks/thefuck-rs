@@ -1,5 +1,5 @@
 use crate::rules::Rule;
-use crate::{Command, Correction, SessionMetadata};
+use crate::{default_rule_id, Command, RuleCorrection, SessionMetadata};
 use lazy_static::lazy_static;
 use regex::Regex;
 
@@ -14,6 +14,8 @@ See more here: https://github.com/nvbn/thefuck/blob/5198b34f24ca4bc414a5bf1b0288
 */
 pub(crate) struct LeadingShellPrompt;
 impl Rule for LeadingShellPrompt {
+    default_rule_id!(LeadingShellPrompt);
+
     fn matches(&self, command: &Command, _session_metadata: &SessionMetadata) -> bool {
         command.output.to_lowercase().contains("command not found") && RE.is_match(command.input)
     }
@@ -22,7 +24,7 @@ impl Rule for LeadingShellPrompt {
         &self,
         command: &'a Command,
         _session_metadata: &'a SessionMetadata,
-    ) -> Option<Vec<Correction<'a>>> {
+    ) -> Option<Vec<RuleCorrection<'a>>> {
         Some(vec![command.input_parts()[1..].into()])
     }
 }

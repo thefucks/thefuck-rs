@@ -1,5 +1,5 @@
 use crate::rules::Rule;
-use crate::{Command, Correction, SessionMetadata};
+use crate::{default_rule_id, Command, RuleCorrection, SessionMetadata};
 use lazy_static::lazy_static;
 use regex::Regex;
 
@@ -9,6 +9,8 @@ lazy_static! {
 
 pub(crate) struct DotJava;
 impl Rule for DotJava {
+    default_rule_id!(DotJava);
+
     fn matches(&self, command: &Command, _session_metadata: &SessionMetadata) -> bool {
         RE.is_match(command.input)
             && command
@@ -20,7 +22,7 @@ impl Rule for DotJava {
         &self,
         command: &'a Command,
         _session_metadata: &'a SessionMetadata,
-    ) -> Option<Vec<Correction<'a>>> {
+    ) -> Option<Vec<RuleCorrection<'a>>> {
         let mut replacement = command.input_parts().to_vec();
         let pos = replacement.iter().position(|p| (p.ends_with(".java")))?;
         *replacement.get_mut(pos)? = replacement.get(pos)?.trim_end_matches(".java").to_owned();

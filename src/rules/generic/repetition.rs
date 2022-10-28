@@ -1,5 +1,5 @@
 use crate::rules::Rule;
-use crate::{Command, Correction, SessionMetadata};
+use crate::{default_rule_id, Command, RuleCorrection, SessionMetadata};
 
 /*
 Fixes error for commands that accidentally repeat the top-level command, e.g. "git git status".
@@ -7,6 +7,8 @@ See more here: https://github.com/nvbn/thefuck/blob/5198b34f24ca4bc414a5bf1b0288
 */
 pub(crate) struct Repetition;
 impl Rule for Repetition {
+    default_rule_id!(Repetition);
+
     // TODO: once Command carries contextual info (like exit codes), we should
     // only run this rule if the command failed (since there could be commands
     // with subcommands that have the same name as the top-level command).
@@ -22,7 +24,7 @@ impl Rule for Repetition {
         &self,
         command: &'a Command,
         _session_metadata: &'a SessionMetadata,
-    ) -> Option<Vec<Correction<'a>>> {
+    ) -> Option<Vec<RuleCorrection<'a>>> {
         if command.input_parts().len() < 2 {
             None
         } else {

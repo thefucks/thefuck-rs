@@ -6,7 +6,7 @@ mod java;
 
 mod util;
 
-use crate::{Command, Correction, SessionMetadata};
+use crate::{Command, RuleCorrection, SessionMetadata};
 use lazy_static::lazy_static;
 use std::{collections::HashMap, sync::Arc};
 
@@ -58,6 +58,12 @@ pub(crate) trait Rule: Send + Sync {
         Arc::new(self)
     }
 
+    /// The name of the rule. See default_rule_id! for a default implementation.
+    /// This should be unique for each rule.
+    // TODO: we can write a procedural macro to just `#[derive(RuleId)]` and
+    // include a trait bound wherever we expect a `Rule`: Rule + RuleId
+    fn id(&self) -> &'static str;
+
     /// Whether the rule should even be considered. If true, we check
     /// if the rule `matches` the command.
     // If this check ever needs to be more sophisticated than just whether or
@@ -66,8 +72,8 @@ pub(crate) trait Rule: Send + Sync {
         true
     }
 
-    /// Whether the command matches this rule. If true, we try to
-    /// `generate_command_corrections` for the rule.
+    /// Whether the command matches this rule. If true,
+    /// we'll try to `generate_command_corrections` for this rule.
     fn matches(&self, command: &Command, session_metadata: &SessionMetadata) -> bool;
 
     /// Generates a list of command corrections for a command.
@@ -75,5 +81,14 @@ pub(crate) trait Rule: Send + Sync {
         &self,
         command: &'a Command,
         session_metadata: &'a SessionMetadata,
-    ) -> Option<Vec<Correction<'a>>>;
+    ) -> Option<Vec<RuleCorrection<'a>>>;
+}
+
+#[macro_export]
+macro_rules! default_rule_id {
+    ($t:ty) => {
+        fn id(&self) -> &'static str {
+            stringify!($t)
+        }
+    };
 }

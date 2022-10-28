@@ -7,21 +7,24 @@ mod rules;
 #[cfg(test)]
 mod test_utils;
 
-/// A Correction could either be a fully formed command or a series
-/// of command parts that need to be combined to form a command.
+// TODO: move these structs/impls to dedicated files.
+
+/// A RuleCorrection is created by a Rule. Itcould either be a
+/// fully formed command or a series of command parts that need
+/// to be combined to form a command.
 ///
 /// Note about Cow<str>: we use a Cow here since the string will either be a reference
 /// to one of the input parts, a static string, or a computed string over an input part.
 /// In the first two cases, a borrowed string suffices, but in the last case, we need an owned string.
 /// Using a Cow allows us to avoid `clone`s for the first two types of strings.
 #[derive(Debug, PartialEq)]
-enum Correction<'a> {
+enum RuleCorrection<'a> {
     Command(Cow<'a, str>),
 
     /// Example: if the corrected command is `git commit -m "best fix"`, then the correction is
     /// ["git", "commit", "-m", "best fix"]. Note that "best fix" is a single part. This is important
     /// as it guarantees the correct shell-escaped command is returned in `to_command_string`.
-    /// Note: although translating into a Correction seems expensive (using Vecs), very few corrections
+    /// Note: although translating into a RuleCorrection seems expensive (using Vecs), very few corrections
     /// are actually computed (only for matching top-level command and if the rule `matches`)
     CommandParts(Vec<Cow<'a, str>>),
 
@@ -30,12 +33,12 @@ enum Correction<'a> {
     /// Corrections, meant to be combined with the shell AND operator. For example,
     /// the command "mkdir -p dir && cd dir" can be expressed with an And variant like so:
     /// And(CommandParts(["mkdir", "-p", "dir"]), Command("cd dir"))
-    And(Box<Correction<'a>>, Box<Correction<'a>>),
+    And(Box<RuleCorrection<'a>>, Box<RuleCorrection<'a>>),
 }
 
-impl<'a> Correction<'a> {
+impl<'a> RuleCorrection<'a> {
     fn to_command_string(&self, shell: &Shell) -> String {
-        use Correction::*;
+        use RuleCorrection::*;
         match self {
             // base cases
             Command(str) => str.to_string(),
@@ -52,39 +55,39 @@ impl<'a> Correction<'a> {
 
     /// Utility to create the And variant (without fussing with Box at callsites)
     #[allow(dead_code)]
-    fn and(first: impl Into<Correction<'a>>, second: impl Into<Correction<'a>>) -> Self {
-        Correction::And(Box::new(first.into()), Box::new(second.into()))
+    fn and(first: impl Into<RuleCorrection<'a>>, second: impl Into<RuleCorrection<'a>>) -> Self {
+        RuleCorrection::And(Box::new(first.into()), Box::new(second.into()))
     }
 }
 
 // Note: need two separate From impl's because we
 // can't do From<T> where T: Cow<str> (compiler will complain
 // about conflicting with the other From impl's)
-impl<'a> From<String> for Correction<'a> {
+impl<'a> From<String> for RuleCorrection<'a> {
     fn from(command: String) -> Self {
-        Correction::Command(command.into())
+        RuleCorrection::Command(command.into())
     }
 }
-impl<'a> From<&'a str> for Correction<'a> {
+impl<'a> From<&'a str> for RuleCorrection<'a> {
     fn from(command: &'a str) -> Self {
-        Correction::Command(command.into())
+        RuleCorrection::Command(command.into())
     }
 }
 
-impl<'a, T> From<Vec<T>> for Correction<'a>
+impl<'a, T> From<Vec<T>> for RuleCorrection<'a>
 where
     T: Into<Cow<'a, str>>,
 {
     fn from(parts: Vec<T>) -> Self {
-        Correction::CommandParts(parts.into_iter().map(Into::into).collect_vec())
+        RuleCorrection::CommandParts(parts.into_iter().map(Into::into).collect_vec())
     }
 }
-impl<'a, T> From<&'a [T]> for Correction<'a>
+impl<'a, T> From<&'a [T]> for RuleCorrection<'a>
 where
     T: AsRef<str>,
 {
     fn from(parts: &'a [T]) -> Self {
-        Correction::CommandParts(
+        RuleCorrection::CommandParts(
             parts
                 .iter()
                 .map(AsRef::as_ref)
@@ -255,36 +258,51 @@ impl<'a> SessionMetadata<'a> {
     }
 }
 
+/// A Correction is what's returned to the caller. It includes the corrected
+/// command along with metadata about the correction itself.
+pub struct Correction {
+    pub command: String,
+    pub rule_applied: &'static str,
+}
+
 /// Returns a list of command corrections given a command. This is _heavily_ inspired
 /// by The Fuck (https://github.com/nvbn/thefuck).
-// TODO: add tests for this function
-pub fn correct_command(command: Command, session_metadata: &SessionMetadata) -> Vec<String> {
-    let rules = &*rules::RULES_BY_COMMAND;
+pub fn correct_command(command: Command, session_metadata: &SessionMetadata) -> Vec<Correction> {
+    let rules_by_command = &*rules::RULES_BY_COMMAND;
 
     let command_name = match command.input_parts.first() {
         None => return vec![],
         Some(first) => first,
     };
 
-    rules
+    rules_by_command
         .get(command_name)
         .into_iter()
         .flatten()
         .chain(rules::GENERIC_RULES.iter())
-        .filter_map(|rule| {
+        .filter(|rule| {
             // Only check a rule if the command failed or if the rule
             // is meant to run irrespective of failures.
             let should_check_matches = !rule.only_run_on_failure() || command.exit_code.is_error();
 
-            (should_check_matches && rule.matches(&command, session_metadata))
-                .then(|| rule.generate_command_corrections(&command, session_metadata))
+            // And finally, make sure the rule matches. Note: the order of these is important.
+            // `matches` can be expensive so we check it last.
+            should_check_matches && rule.matches(&command, session_metadata)
+        })
+        .flat_map(|rule| {
+            // Generate the corrections for this rule.
+            rule.generate_command_corrections(&command, session_metadata)
+                .into_iter()
                 .flatten()
+                .filter_map(|rule_correction| {
+                    // Don't consider corrections that look exactly like the original command input.
+                    let cmd_string = rule_correction.to_command_string(&session_metadata.shell);
+                    (cmd_string != command.input).then_some(Correction {
+                        command: cmd_string,
+                        rule_applied: rule.id(),
+                    })
+                })
         })
-        .flatten()
-        .filter_map(|correction| {
-            let cmd_string = correction.to_command_string(&session_metadata.shell);
-            (cmd_string != command.input).then_some(cmd_string)
-        })
-        .unique()
+        .unique_by(|correction| correction.command.to_owned())
         .collect()
 }

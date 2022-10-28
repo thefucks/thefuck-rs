@@ -1,5 +1,5 @@
 use crate::rules::Rule;
-use crate::{Command, Correction, SessionMetadata};
+use crate::{default_rule_id, Command, RuleCorrection, SessionMetadata};
 
 /*
 Fixes a git push command that actually requires a "--force-with-lease".
@@ -7,6 +7,8 @@ See more here: https://github.com/nvbn/thefuck/blob/5198b34f24ca4bc414a5bf1b0288
 */
 pub(crate) struct GitPushForce;
 impl Rule for GitPushForce {
+    default_rule_id!(GitPushForce);
+
     fn matches(&self, command: &Command, _session_metadata: &SessionMetadata) -> bool {
         let lowercase_output = command.lowercase_output();
         command.input_parts().iter().any(|part| part == "push")
@@ -20,7 +22,7 @@ impl Rule for GitPushForce {
         &self,
         command: &'a Command,
         _session_metadata: &'a SessionMetadata,
-    ) -> Option<Vec<Correction<'a>>> {
+    ) -> Option<Vec<RuleCorrection<'a>>> {
         let mut new_command = command.input_parts().to_vec();
         let push_index = new_command.iter().position(|part| part == "push")?;
         new_command.insert(push_index + 1, "--force-with-lease".to_owned());

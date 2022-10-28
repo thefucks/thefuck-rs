@@ -1,5 +1,5 @@
 use crate::rules::Rule;
-use crate::{Command, Correction, SessionMetadata};
+use crate::{default_rule_id, Command, RuleCorrection, SessionMetadata};
 
 /*
 Corrects a command that looks like "cargo" to "cargo build".
@@ -7,6 +7,8 @@ See more here: https://github.com/nvbn/thefuck/blob/5198b34f24ca4bc414a5bf1b0288
 */
 pub(crate) struct Cargo;
 impl Rule for Cargo {
+    default_rule_id!(NoCommand);
+
     fn only_run_on_failure(&self) -> bool {
         // Without any subcommands, the cargo rule exits successfully,
         // but we still want to apply this rule.
@@ -21,7 +23,7 @@ impl Rule for Cargo {
         &self,
         _command: &'a Command,
         _session_metadata: &'a SessionMetadata,
-    ) -> Option<Vec<Correction<'a>>> {
+    ) -> Option<Vec<RuleCorrection<'a>>> {
         Some(vec![vec!["cargo", "build"].into()])
     }
 }

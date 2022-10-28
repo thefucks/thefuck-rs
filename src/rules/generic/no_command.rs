@@ -1,12 +1,14 @@
 use crate::rules::util::{get_single_closest_match, new_commands_from_suggestions};
 use crate::rules::Rule;
-use crate::{Command, Correction, SessionMetadata};
+use crate::{default_rule_id, Command, RuleCorrection, SessionMetadata};
 use itertools::Itertools;
 
 /// The NoCommand rule is meant to address failures when the first word
 /// in the command is not recognized by the shell.
 pub(crate) struct NoCommand;
 impl Rule for NoCommand {
+    default_rule_id!(NoCommand);
+
     fn matches(&self, command: &Command, session_metadata: &SessionMetadata) -> bool {
         // TODO: use a execute_command callback to just check `which`
         // Checking output is too brittle since it'll vary from shell to shell
@@ -23,7 +25,7 @@ impl Rule for NoCommand {
         &self,
         command: &'a Command,
         session_metadata: &'a SessionMetadata,
-    ) -> Option<Vec<Correction<'a>>> {
+    ) -> Option<Vec<RuleCorrection<'a>>> {
         let to_fix = command.input_parts().first()?.as_str();
 
         // Get a match from the top level commands
@@ -48,7 +50,8 @@ impl Rule for NoCommand {
 
 #[cfg(test)]
 mod tests {
-    use crate::{correct_command, Command, SessionMetadata};
+    use crate::{test_utils::regular_corrections, Command, SessionMetadata};
+
     const EXECUTABLES: &[&str] = &["git", "cargo"];
     const ALIASES: &[&str] = &["foo", "bar", "gt"];
     const FUNCTIONS: &[&str] = &["func", "meth"];
@@ -61,7 +64,10 @@ mod tests {
         let mut metadata = SessionMetadata::new();
         metadata.set_executables(EXECUTABLES.iter().copied());
 
-        assert_eq!(correct_command(command, &metadata), vec!["git checkout"]);
+        assert_eq!(
+            regular_corrections(command, &metadata),
+            vec!["git checkout"]
+        );
     }
 
     #[test]
@@ -70,7 +76,7 @@ mod tests {
         let mut metadata = SessionMetadata::new();
         metadata.set_aliases(ALIASES.iter().copied());
 
-        assert_eq!(correct_command(command, &metadata), vec!["foo access"]);
+        assert_eq!(regular_corrections(command, &metadata), vec!["foo access"]);
     }
 
     #[test]
@@ -79,7 +85,7 @@ mod tests {
         let mut metadata = SessionMetadata::new();
         metadata.set_functions(FUNCTIONS.iter().copied());
 
-        assert_eq!(correct_command(command, &metadata), vec!["func call"]);
+        assert_eq!(regular_corrections(command, &metadata), vec!["func call"]);
     }
 
     #[test]
@@ -88,7 +94,7 @@ mod tests {
         let mut metadata = SessionMetadata::new();
         metadata.set_builtins(BUILTINS.iter().copied());
 
-        assert_eq!(correct_command(command, &metadata), vec!["print -f"]);
+        assert_eq!(regular_corrections(command, &metadata), vec!["print -f"]);
     }
 
     #[test]
@@ -98,7 +104,7 @@ mod tests {
         metadata.set_executables(EXECUTABLES.iter().copied());
         metadata.set_history(HISTORY.iter().copied());
 
-        assert_eq!(correct_command(command, &metadata), vec!["git commit"]);
+        assert_eq!(regular_corrections(command, &metadata), vec!["git commit"]);
     }
 
     #[test]
@@ -112,7 +118,7 @@ mod tests {
         metadata.set_history(HISTORY.iter().copied());
 
         assert_eq!(
-            correct_command(command, &metadata),
+            regular_corrections(command, &metadata),
             vec!["git commit", "gt commit"]
         );
     }

@@ -1,6 +1,6 @@
 use crate::rules::util::new_commands_from_suggestions;
 use crate::rules::Rule;
-use crate::{Command, Correction, SessionMetadata};
+use crate::{default_rule_id, Command, RuleCorrection, SessionMetadata};
 use lazy_static::lazy_static;
 use regex::Regex;
 
@@ -18,6 +18,8 @@ See more here: https://github.com/nvbn/thefuck/blob/5198b34f24ca4bc414a5bf1b0288
 */
 pub(crate) struct GitCommandNotFound;
 impl Rule for GitCommandNotFound {
+    default_rule_id!(GitCommandNotFound);
+
     fn matches(&self, command: &Command, _session_metadata: &SessionMetadata) -> bool {
         let lowercase_output = command.lowercase_output();
         NOT_GIT_COMMAND_RE.is_match(lowercase_output)
@@ -29,7 +31,7 @@ impl Rule for GitCommandNotFound {
         &self,
         command: &'a Command,
         _session_metadata: &'a SessionMetadata,
-    ) -> Option<Vec<Correction<'a>>> {
+    ) -> Option<Vec<RuleCorrection<'a>>> {
         let lowercase_output = command.lowercase_output();
 
         let incorrect_command = NOT_GIT_COMMAND_RE

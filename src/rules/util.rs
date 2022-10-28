@@ -1,6 +1,6 @@
 use difflib::get_close_matches;
 
-use crate::Correction;
+use crate::RuleCorrection;
 
 // TODO: eventually make this configurable
 /// The score here refers to the ratio used by difflib.
@@ -12,7 +12,7 @@ pub(crate) fn new_commands_from_suggestions<'a>(
     suggestions: impl IntoIterator<Item = &'a str>,
     input_parts: &[String],
     to_replace: &str,
-) -> Option<Vec<Correction<'a>>> {
+) -> Option<Vec<RuleCorrection<'a>>> {
     let replacement = input_parts.to_vec();
     let replacement_index = input_parts.iter().position(|part| part == to_replace)?;
 

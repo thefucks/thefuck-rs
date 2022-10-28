@@ -1,5 +1,5 @@
 use crate::rules::Rule;
-use crate::{Command, Correction, SessionMetadata};
+use crate::{default_rule_id, Command, RuleCorrection, SessionMetadata};
 use lazy_static::lazy_static;
 use regex::Regex;
 
@@ -13,6 +13,8 @@ See more here: https://github.com/nvbn/thefuck/blob/5198b34f24ca4bc414a5bf1b0288
 */
 pub(crate) struct CargoNoCommand;
 impl Rule for CargoNoCommand {
+    default_rule_id!(CargoNoCommand);
+
     fn matches(&self, command: &Command, _session_metadata: &SessionMetadata) -> bool {
         command.lowercase_output().contains("no such subcommand") && RE.is_match(command.output)
     }
@@ -21,7 +23,7 @@ impl Rule for CargoNoCommand {
         &self,
         command: &'a Command,
         _session_metadata: &'a SessionMetadata,
-    ) -> Option<Vec<Correction<'a>>> {
+    ) -> Option<Vec<RuleCorrection<'a>>> {
         let fix = RE
             .captures(command.output)
             .and_then(|captures| captures.get(1))

@@ -1,5 +1,5 @@
 use crate::rules::Rule;
-use crate::{Command, Correction, SessionMetadata};
+use crate::{default_rule_id, Command, RuleCorrection, SessionMetadata};
 use lazy_static::lazy_static;
 use regex::Regex;
 
@@ -11,6 +11,8 @@ lazy_static! {
 /// See more here: https://github.com/nvbn/thefuck/blob/5198b34f24ca4bc414a5bf1b0288ee86ea2529a8/thefuck/rules/cat_dir.py
 pub(crate) struct CatDir;
 impl Rule for CatDir {
+    default_rule_id!(CatDir);
+
     fn matches(&self, command: &Command, _session_metadata: &SessionMetadata) -> bool {
         // Note: thefuck does this by checking that the second input part is a directory itself.
         // This can be slightly problematic if there are options between cat and the arg (e.g. `cat -b src`).
@@ -21,7 +23,7 @@ impl Rule for CatDir {
         &self,
         command: &'a Command,
         _session_metadata: &'a SessionMetadata,
-    ) -> Option<Vec<Correction<'a>>> {
+    ) -> Option<Vec<RuleCorrection<'a>>> {
         let dirname = RE
             .captures(command.output)
             .and_then(|captures| captures.get(1))

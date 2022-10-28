@@ -4,7 +4,7 @@ See more here: https://github.com/nvbn/thefuck/blob/5198b34f24ca4bc414a5bf1b0288
 */
 
 use crate::rules::Rule;
-use crate::{Command, Correction, SessionMetadata};
+use crate::{default_rule_id, Command, RuleCorrection, SessionMetadata};
 
 pub(crate) struct Sudo;
 
@@ -40,6 +40,8 @@ static PATTERNS: &[&str] = &[
 ];
 
 impl Rule for Sudo {
+    default_rule_id!(Sudo);
+
     fn matches(&self, command: &Command, _session_metadata: &SessionMetadata) -> bool {
         // If user already tried sudo, no point in suggesting it again.
         if let Some("sudo") = command.input_parts().first().map(String::as_str) {
@@ -56,7 +58,7 @@ impl Rule for Sudo {
         &self,
         command: &'a Command,
         _session_metadata: &'a SessionMetadata,
-    ) -> Option<Vec<Correction<'a>>> {
+    ) -> Option<Vec<RuleCorrection<'a>>> {
         let new_command = [&["sudo".to_owned()], command.input_parts()].concat();
         Some(vec![new_command.into()])
     }
