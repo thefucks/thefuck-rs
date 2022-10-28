@@ -37,11 +37,19 @@ pub(crate) trait Rule: Send + Sync {
         Arc::new(self)
     }
 
-    /// Whether the command matches this rule.
+    /// Whether the rule should even be considered. If true, we check
+    /// if the rule `matches` the command.
+    // If this check ever needs to be more sophisticated than just whether or
+    // not we should run on failure, we should rename this to be more generic.
+    fn only_run_on_failure(&self) -> bool {
+        true
+    }
+
+    /// Whether the command matches this rule. If true, we try to
+    /// `generate_command_corrections` for the rule.
     fn matches(&self, command: &Command, session_metadata: &SessionMetadata) -> bool;
 
-    /// Generates a list of command corrections for a command. This is only called if `matches`
-    /// returns true.
+    /// Generates a list of command corrections for a command.
     fn generate_command_corrections<'a>(
         &self,
         command: &'a Command,

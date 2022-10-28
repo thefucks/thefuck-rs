@@ -272,7 +272,11 @@ pub fn correct_command(command: Command, session_metadata: &SessionMetadata) -> 
         .flatten()
         .chain(rules::GENERIC_RULES.iter())
         .filter_map(|rule| {
-            rule.matches(&command, session_metadata)
+            // Only check a rule if the command failed or if the rule
+            // is meant to run irrespective of failures.
+            let should_check_matches = !rule.only_run_on_failure() || command.exit_code.is_error();
+
+            (should_check_matches && rule.matches(&command, session_metadata))
                 .then(|| rule.generate_command_corrections(&command, session_metadata))
                 .flatten()
         })
