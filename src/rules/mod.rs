@@ -11,21 +11,42 @@ use lazy_static::lazy_static;
 use std::{collections::HashMap, sync::Arc};
 
 lazy_static! {
-    pub(crate) static ref RULES: Rules = Rules(HashMap::from([
-        cargo::rules_for_command(),
-        git::rules_for_command(),
-        cat::rules_for_command(),
-        java::rules_for_command(),
-    ]));
+    // Only used internally by this mod
+    static ref COMMAND_GROUPS: Vec<CommandGroup> =
+        vec![
+            cargo::command_group(),
+            cat::command_group(),
+            git::command_group(),
+            java::command_group()
+        ];
+
+    pub(crate) static ref RULES_BY_COMMAND: Rules = Rules::from_command_groups(COMMAND_GROUPS.iter());
     pub(crate) static ref GENERIC_RULES: Vec<Arc<dyn Rule>> = generic::rules();
 }
 
+/// A list of command names that have common rules. Often times, this will
+/// be a list of size 1, but not always -- for example,
+/// ["python", "python3"] is an example of a command group
+pub struct CommandGroup {
+    command_names: &'static [&'static str],
+    rules: Vec<Arc<dyn Rule>>,
+}
+
 /// Map of a command to the `Rule`s that may apply for the given command.
-pub(crate) struct Rules(HashMap<&'static str, Vec<Arc<dyn Rule>>>);
+pub(crate) struct Rules(HashMap<&'static str, &'static [Arc<dyn Rule>]>);
 
 impl Rules {
-    pub fn get(&self, command_name: &str) -> Option<&Vec<Arc<dyn Rule>>> {
-        self.0.get(command_name)
+    pub fn get(&self, command_name: &str) -> Option<&'static [Arc<dyn Rule>]> {
+        self.0.get(command_name).copied()
+    }
+
+    fn from_command_groups(command_groups: impl Iterator<Item = &'static CommandGroup>) -> Self {
+        Rules(HashMap::from_iter(command_groups.flat_map(|cmd_group| {
+            cmd_group
+                .command_names
+                .iter()
+                .map(|cmd| (*cmd, cmd_group.rules.as_slice()))
+        })))
     }
 }
 

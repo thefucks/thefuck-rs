@@ -259,7 +259,7 @@ impl<'a> SessionMetadata<'a> {
 /// by The Fuck (https://github.com/nvbn/thefuck).
 // TODO: add tests for this function
 pub fn correct_command(command: Command, session_metadata: &SessionMetadata) -> Vec<String> {
-    let rules = &*rules::RULES;
+    let rules = &*rules::RULES_BY_COMMAND;
 
     let command_name = match command.input_parts.first() {
         None => return vec![],

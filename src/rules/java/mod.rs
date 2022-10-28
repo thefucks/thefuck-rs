@@ -1,9 +1,13 @@
 use crate::rules::java::dot_java::DotJava;
 use crate::rules::Rule;
-use std::sync::Arc;
+
+use super::CommandGroup;
 
 mod dot_java;
 
-pub(crate) fn rules_for_command() -> (&'static str, Vec<Arc<dyn Rule>>) {
-    ("java", vec![DotJava.to_arc()])
+pub(crate) fn command_group() -> CommandGroup {
+    CommandGroup {
+        command_names: &["java"],
+        rules: vec![DotJava.to_arc()],
+    }
 }
