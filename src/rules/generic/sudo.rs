@@ -1,8 +1,6 @@
-/*
-Fixes error for commands that need to be run with "sudo".
-See more here: https://github.com/nvbn/thefuck/blob/5198b34f24ca4bc414a5bf1b0288ee86ea2529a8/thefuck/rules/sudo.py
-*/
-
+/// Fixes error for commands that need to be run with "sudo".
+/// Note: this rule is not in the `sudo` directory, because it
+/// applies to rules that _don't_ start with `sudo`.
 use crate::rules::Rule;
 use crate::{default_rule_id, Command, RuleCorrection, SessionMetadata};
 

@@ -6,6 +6,7 @@ mod generic;
 mod git;
 mod java;
 mod ls;
+mod sudo;
 mod touch;
 
 mod util;
@@ -26,6 +27,7 @@ lazy_static! {
             brew::command_group(),
             ls::command_group(),
             touch::command_group(),
+            sudo::command_group(),
         ];
 
     pub(crate) static ref RULES_BY_COMMAND: Rules = Rules::from_command_groups(COMMAND_GROUPS.iter());
