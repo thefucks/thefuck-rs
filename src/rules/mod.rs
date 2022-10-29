@@ -2,6 +2,7 @@ mod brew;
 mod cargo;
 mod cat;
 mod cd;
+mod cp;
 mod generic;
 mod git;
 mod java;
@@ -28,6 +29,7 @@ lazy_static! {
             ls::command_group(),
             touch::command_group(),
             sudo::command_group(),
+            cp::command_group(),
         ];
 
     pub(crate) static ref RULES_BY_COMMAND: Rules = Rules::from_command_groups(COMMAND_GROUPS.iter());
