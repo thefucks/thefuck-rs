@@ -5,6 +5,7 @@ mod cd;
 mod generic;
 mod git;
 mod java;
+mod ls;
 
 mod util;
 
@@ -22,8 +23,10 @@ lazy_static! {
             java::command_group(),
             cd::command_group(),
             brew::command_group(),
+            ls::command_group(),
         ];
-        pub(crate) static ref RULES_BY_COMMAND: Rules = Rules::from_command_groups(COMMAND_GROUPS.iter());
+
+    pub(crate) static ref RULES_BY_COMMAND: Rules = Rules::from_command_groups(COMMAND_GROUPS.iter());
     pub(crate) static ref GENERIC_RULES: Vec<Arc<dyn Rule>> = generic::rules();
 }
 
