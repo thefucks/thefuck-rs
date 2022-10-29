@@ -3,6 +3,7 @@ mod cargo;
 mod cat;
 mod cd;
 mod cp;
+mod docker;
 mod generic;
 mod git;
 mod java;
@@ -32,6 +33,7 @@ lazy_static! {
             sudo::command_group(),
             cp::command_group(),
             rails::command_group(),
+            docker::command_group(),
         ];
 
     pub(crate) static ref RULES_BY_COMMAND: Rules = Rules::from_command_groups(COMMAND_GROUPS.iter());
