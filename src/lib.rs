@@ -148,14 +148,19 @@ impl Default for Shell {
 /// with its metadata. This is used to determine which corrections
 /// make sense in the context of the command.
 pub struct Command<'a> {
+    // The following are required attributes of a Command
     input: &'a str,
     output: &'a str,
-
     /// TODO: by default, a rule should only be run if the command failed.
     /// Rules that should run if a command _succeeded_ should have to opt-in.
     #[allow(dead_code)]
     exit_code: ExitCode,
 
+    // The following are optional attributes of a Command, following the builder pattern.
+    /// The directory the command was executed in.
+    working_dir: Option<&'a str>,
+
+    // The following are internal, computed properties of a Command.
     lowercase_output: String,
     input_parts: Vec<String>,
 }
@@ -170,10 +175,16 @@ impl<'a> Command<'a> {
         Self {
             input,
             output,
+            working_dir: None,
             lowercase_output,
             input_parts,
             exit_code,
         }
+    }
+
+    pub fn set_working_dir(mut self, working_dir: &'a str) -> Self {
+        self.working_dir = Some(working_dir);
+        self
     }
 
     pub fn input_parts(&self) -> &[String] {
