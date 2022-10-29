@@ -8,6 +8,7 @@ mod generic;
 mod git;
 mod java;
 mod ls;
+mod pip;
 mod rails;
 mod sed;
 mod sudo;
@@ -36,6 +37,7 @@ lazy_static! {
             rails::command_group(),
             docker::command_group(),
             sed::command_group(),
+            pip::command_group(),
         ];
 
     pub(crate) static ref RULES_BY_COMMAND: Rules = Rules::from_command_groups(COMMAND_GROUPS.iter());
