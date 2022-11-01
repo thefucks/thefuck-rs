@@ -200,7 +200,7 @@ type AliasName<'a> = &'a str;
 type BuiltinName<'a> = &'a str;
 type ExecutableName<'a> = &'a str;
 type FunctionName<'a> = &'a str;
-
+type BranchName<'a> = &'a str;
 type HistoryItem<'a> = &'a str;
 
 #[derive(Default)]
@@ -213,6 +213,10 @@ pub struct SessionMetadata<'a> {
     functions: HashSet<FunctionName<'a>>,
 
     history: Vec<HistoryItem<'a>>,
+
+    // TODO: deprecate this field once we support
+    // arbitrary command execution in rules
+    git_branches: HashSet<BranchName<'a>>,
 }
 
 impl<'a> SessionMetadata<'a> {
@@ -238,6 +242,10 @@ impl<'a> SessionMetadata<'a> {
 
     pub fn set_history(&mut self, history: impl IntoIterator<Item = HistoryItem<'a>>) {
         self.history = Vec::from_iter(history);
+    }
+
+    pub fn set_git_branches(&mut self, git_branches: impl IntoIterator<Item = BranchName<'a>>) {
+        self.git_branches = HashSet::from_iter(git_branches);
     }
 
     pub fn set_shell(&mut self, shell: Shell) {
