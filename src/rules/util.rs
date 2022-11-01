@@ -1,3 +1,5 @@
+use std::path::Path;
+
 use difflib::get_close_matches;
 
 use crate::RuleCorrection;
@@ -42,12 +44,27 @@ pub fn get_single_closest_match<'a>(to_match: &str, possiblities: Vec<&'a str>) 
         .copied()
 }
 
+pub fn is_file(filename: impl AsRef<Path>, working_dir: impl AsRef<Path>) -> bool {
+    let filename_path = Path::new(filename.as_ref());
+    if filename_path.is_absolute() {
+        filename_path.exists()
+    } else {
+        let mut working_dir_path = Path::new(working_dir.as_ref()).to_owned();
+        working_dir_path.push(filename);
+        working_dir_path.exists()
+    }
+}
+
 #[cfg(test)]
 mod test {
+    use std::fs;
+
+    use tempfile::tempdir;
+
     use crate::rules::util::new_commands_from_suggestions;
     use crate::{Command, ExitCode};
 
-    use super::get_single_closest_match;
+    use super::{get_single_closest_match, is_file};
 
     #[test]
     fn test_new_commands_from_suggestions() {
@@ -85,5 +102,28 @@ mod test {
         let to_match = "abc";
         let possiblities = vec!["pull", "pole", "random"];
         assert_eq!(get_single_closest_match(to_match, possiblities), None)
+    }
+
+    #[test]
+    fn is_file_with_simple_file() {
+        let tempdir = tempdir().unwrap();
+        fs::File::create(tempdir.path().join("file")).unwrap();
+
+        assert!(is_file(tempdir.path().join("file"), tempdir.path()))
+    }
+
+    #[test]
+    fn is_file_with_dir() {
+        let tempdir = tempdir().unwrap();
+        fs::create_dir(tempdir.path().join("dir")).unwrap();
+
+        assert!(is_file(tempdir.path().join("dir"), tempdir.path()))
+    }
+
+    #[test]
+    fn is_file_with_nonexistant() {
+        let tempdir = tempdir().unwrap();
+
+        assert!(!is_file(tempdir.path().join("dir"), tempdir.path()))
     }
 }

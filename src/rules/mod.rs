@@ -6,6 +6,7 @@ mod cp;
 mod docker;
 mod generic;
 mod git;
+mod grep;
 mod java;
 mod ls;
 mod npm;
@@ -42,6 +43,7 @@ lazy_static! {
             pip::command_group(),
             npm::command_group(),
             yarn::command_group(),
+            grep::command_group(),
         ];
 
     pub(crate) static ref RULES_BY_COMMAND: Rules = Rules::from_command_groups(COMMAND_GROUPS.iter());
