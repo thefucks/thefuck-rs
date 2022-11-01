@@ -11,6 +11,7 @@ mod java;
 mod ls;
 mod npm;
 mod pip;
+mod python;
 mod rails;
 mod sed;
 mod sudo;
@@ -44,6 +45,7 @@ lazy_static! {
             npm::command_group(),
             yarn::command_group(),
             grep::command_group(),
+            python::command_group(),
         ];
 
     pub(crate) static ref RULES_BY_COMMAND: Rules = Rules::from_command_groups(COMMAND_GROUPS.iter());

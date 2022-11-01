@@ -1,7 +1,7 @@
 use crate::rules::generic::{
     cd_parent::CdParent, chmod_x::ChmodX, history::History,
-    leading_shell_prompt::LeadingShellPrompt, no_command::NoCommand, repetition::Repetition,
-    sudo::Sudo,
+    leading_shell_prompt::LeadingShellPrompt, no_command::NoCommand, python::Python,
+    repetition::Repetition, sudo::Sudo,
 };
 use crate::rules::Rule;
 use std::sync::Arc;
@@ -11,6 +11,7 @@ mod chmod_x;
 mod history;
 mod leading_shell_prompt;
 mod no_command;
+mod python;
 mod repetition;
 mod sudo;
 
@@ -19,9 +20,10 @@ pub(crate) fn rules() -> Vec<Arc<dyn Rule>> {
         ChmodX.to_arc(),
         LeadingShellPrompt.to_arc(),
         Repetition.to_arc(),
-        Sudo.to_arc(),
+        Python.to_arc(),
         NoCommand.to_arc(),
         CdParent.to_arc(),
         History.to_arc(),
+        Sudo.to_arc(),
     ]
 }
