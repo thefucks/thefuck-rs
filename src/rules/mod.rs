@@ -14,6 +14,7 @@ mod rails;
 mod sed;
 mod sudo;
 mod touch;
+mod yarn;
 
 mod util;
 
@@ -40,6 +41,7 @@ lazy_static! {
             sed::command_group(),
             pip::command_group(),
             npm::command_group(),
+            yarn::command_group(),
         ];
 
     pub(crate) static ref RULES_BY_COMMAND: Rules = Rules::from_command_groups(COMMAND_GROUPS.iter());
