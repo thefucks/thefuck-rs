@@ -56,7 +56,7 @@ mod tests {
     const ALIASES: &[&str] = &["foo", "bar", "gt"];
     const FUNCTIONS: &[&str] = &["func", "meth"];
     const BUILTINS: &[&str] = &["print"];
-    const HISTORY: &[&str] = &["gitz random", "gtii cmd", "git cmd"];
+    const HISTORY: &[&str] = &["gitz random", "gtii cmd", "git commit"];
 
     #[test]
     fn test_executable_correction() {
