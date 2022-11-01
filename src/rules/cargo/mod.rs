@@ -10,6 +10,6 @@ mod cargo_no_command;
 pub(crate) fn command_group() -> CommandGroup {
     CommandGroup {
         command_names: &["cargo"],
-        rules: vec![Cargo.to_arc(), CargoNoCommand.to_arc()],
+        rules: vec![CargoNoCommand.to_arc(), Cargo.to_arc()],
     }
 }

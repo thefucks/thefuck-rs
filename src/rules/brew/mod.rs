@@ -18,11 +18,11 @@ pub(crate) fn command_group() -> CommandGroup {
     CommandGroup {
         command_names: &["brew"],
         rules: vec![
+            BrewUnknownCommand.to_arc(),
             BrewInstall.to_arc(),
-            BrewLink.to_arc(),
             BrewReinstall.to_arc(),
             BrewUninstall.to_arc(),
-            BrewUnknownCommand.to_arc(),
+            BrewLink.to_arc(),
             BrewUpdateUpgrade.to_arc(),
         ],
     }

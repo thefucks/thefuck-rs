@@ -13,8 +13,8 @@ pub(crate) fn command_group() -> CommandGroup {
     CommandGroup {
         command_names: &["docker"],
         rules: vec![
-            DockerImageRm.to_arc(),
             DockerNoCommand.to_arc(),
+            DockerImageRm.to_arc(),
             DockerLogin.to_arc(),
         ],
     }

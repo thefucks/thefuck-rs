@@ -21,9 +21,9 @@ pub(crate) fn rules() -> Vec<Arc<dyn Rule>> {
         LeadingShellPrompt.to_arc(),
         Repetition.to_arc(),
         Python.to_arc(),
-        NoCommand.to_arc(),
         CdParent.to_arc(),
-        History.to_arc(),
         Sudo.to_arc(),
+        History.to_arc(),
+        NoCommand.to_arc(),
     ]
 }

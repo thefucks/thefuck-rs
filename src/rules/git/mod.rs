@@ -15,10 +15,10 @@ pub(crate) fn command_group() -> CommandGroup {
     CommandGroup {
         command_names: &["git"],
         rules: vec![
-            GitPushSetUpstream.to_arc(),
-            GitPushForce.to_arc(),
             GitCommandNotFound.to_arc(),
             GitCheckout.to_arc(),
+            GitPushSetUpstream.to_arc(),
+            GitPushForce.to_arc(),
         ],
     }
 }

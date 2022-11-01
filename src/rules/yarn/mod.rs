@@ -15,9 +15,9 @@ pub(crate) fn command_group() -> CommandGroup {
     CommandGroup {
         command_names: &["yarn"],
         rules: vec![
-            YarnHelp.to_arc(),
-            YarnAlias.to_arc(),
             YarnCommandNotFound.to_arc(),
+            YarnAlias.to_arc(),
+            YarnHelp.to_arc(),
             YarnCommandReplaced.to_arc(),
         ],
     }

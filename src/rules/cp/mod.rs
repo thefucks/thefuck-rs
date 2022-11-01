@@ -9,6 +9,6 @@ mod cp_directory;
 pub(crate) fn command_group() -> CommandGroup {
     CommandGroup {
         command_names: &["cp"],
-        rules: vec![CpCreateDestination.to_arc(), CpDirectory.to_arc()],
+        rules: vec![CpDirectory.to_arc(), CpCreateDestination.to_arc()],
     }
 }

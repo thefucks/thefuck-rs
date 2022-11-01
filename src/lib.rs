@@ -295,6 +295,10 @@ pub fn correct_command(command: Command, session_metadata: &SessionMetadata) -> 
         Some(first) => first,
     };
 
+    // Note: the current order that the rules are applied in is:
+    // 1. command specific rules before generic rules
+    // 2. within each rule group, the order of rules is the order in which they're evaluated
+    // This is a stopgap until we support `Priority` on a RuleCorrection
     rules_by_command
         .get(command_name)
         .into_iter()
