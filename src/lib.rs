@@ -279,6 +279,7 @@ impl<'a> SessionMetadata<'a> {
 
 /// A Correction is what's returned to the caller. It includes the corrected
 /// command along with metadata about the correction itself.
+#[derive(Clone)]
 pub struct Correction {
     pub command: String,
     pub rule_applied: &'static str,
