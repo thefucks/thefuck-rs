@@ -2,6 +2,7 @@ mod brew;
 mod cargo;
 mod cat;
 mod cd;
+mod conda;
 mod cp;
 mod docker;
 mod generic;
@@ -46,6 +47,7 @@ lazy_static! {
             yarn::command_group(),
             grep::command_group(),
             python::command_group(),
+            conda::command_group(),
         ];
 
     pub(crate) static ref RULES_BY_COMMAND: Rules = Rules::from_command_groups(COMMAND_GROUPS.iter());
