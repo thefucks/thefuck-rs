@@ -44,7 +44,8 @@ mod tests {
     const HISTORY: &[&str] = &["./super-script -f", "git checkout master"];
 
     #[test]
-    fn test_executable_correction() {
+    #[ignore]
+    fn test_history_correction() {
         let command = Command::new("./superscript -f", "no such file or directory", 127.into());
         let mut metadata = SessionMetadata::new();
         metadata.set_history(HISTORY.iter().copied());
