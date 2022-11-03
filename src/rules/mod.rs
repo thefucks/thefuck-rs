@@ -10,6 +10,7 @@ mod git;
 mod grep;
 mod java;
 mod ls;
+mod mkdir;
 mod npm;
 mod pip;
 mod python;
@@ -48,6 +49,7 @@ lazy_static! {
             grep::command_group(),
             python::command_group(),
             conda::command_group(),
+            mkdir::command_group(),
         ];
 
     pub(crate) static ref RULES_BY_COMMAND: Rules = Rules::from_command_groups(COMMAND_GROUPS.iter());
