@@ -9,10 +9,14 @@ pub(crate) struct Cargo;
 impl Rule for Cargo {
     default_rule_id!(NoCommand);
 
-    fn only_run_on_failure(&self) -> bool {
+    fn should_be_considered_by_default(
+        &self,
+        _command: &Command,
+        _session_metadata: &SessionMetadata,
+    ) -> bool {
         // Without any subcommands, the cargo rule exits successfully,
         // but we still want to apply this rule.
-        false
+        true
     }
 
     fn matches(&self, command: &Command, _session_metadata: &SessionMetadata) -> bool {

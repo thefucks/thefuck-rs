@@ -97,12 +97,17 @@ where
     }
 }
 
-#[derive(PartialEq, Eq)]
+#[derive(PartialEq, Eq, PartialOrd, Ord)]
 pub struct ExitCode(usize);
 
 impl ExitCode {
+    /// We specifically consider exit codes 130 and 141 as success
+    /// - 130 is the exit code for SIGINT (e.g. user terminates process with ctrl-c)
+    /// - 141 is the exit code for SIGPIPE (e.g. user quits the git log pager)
+    // TODO: we should support passing in exit codes so that a client
+    // can configure this.
     pub fn is_success(&self) -> bool {
-        self.0 == 0
+        self.0 == 0 || self.0 == 130 || self.0 == 141
     }
 
     pub fn is_error(&self) -> bool {
@@ -307,13 +312,13 @@ pub fn correct_command(command: Command, session_metadata: &SessionMetadata) -> 
         .flatten()
         .chain(rules::GENERIC_RULES.iter())
         .filter(|rule| {
-            // Only check a rule if the command failed or if the rule
-            // is meant to run irrespective of failures.
-            let should_check_matches = !rule.only_run_on_failure() || command.exit_code.is_error();
+            // Only check a rule if it should be considered by default.
+            let should_be_considered =
+                rule.should_be_considered_by_default(&command, session_metadata);
 
             // And finally, make sure the rule matches. Note: the order of these is important.
             // `matches` can be expensive so we check it last.
-            should_check_matches && rule.matches(&command, session_metadata)
+            should_be_considered && rule.matches(&command, session_metadata)
         })
         .flat_map(|rule| {
             // Generate the corrections for this rule.

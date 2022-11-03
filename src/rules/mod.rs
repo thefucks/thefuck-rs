@@ -98,10 +98,12 @@ pub(crate) trait Rule: Send + Sync {
 
     /// Whether the rule should even be considered. If true, we check
     /// if the rule `matches` the command.
-    // If this check ever needs to be more sophisticated than just whether or
-    // not we should run on failure, we should rename this to be more generic.
-    fn only_run_on_failure(&self) -> bool {
-        true
+    fn should_be_considered_by_default(
+        &self,
+        command: &Command,
+        _session_metadata: &SessionMetadata,
+    ) -> bool {
+        command.exit_code.is_error()
     }
 
     /// Whether the command matches this rule. If true,
