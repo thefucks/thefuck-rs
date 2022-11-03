@@ -169,6 +169,8 @@ impl<'a> Command<'a> {
     pub fn new(input: &'a str, output: &'a str, exit_code: ExitCode) -> Self {
         // TODO: We need to re-escape multiword parts in the input after splitting. Thefuck has a
         // terribly hacky way of doing this here: https://github.com/nvbn/thefuck/blob/4c7479b3adcf8715a93d0c48e1ece83a35cda50d/thefuck/shells/generic.py#L87
+        let input = input.trim();
+        let output = output.trim();
         let input_parts = shlex::split(input).unwrap_or_default();
         let lowercase_output = output.to_lowercase();
 
@@ -320,7 +322,11 @@ pub fn correct_command(command: Command, session_metadata: &SessionMetadata) -> 
                 .flatten()
                 .filter_map(|rule_correction| {
                     // Don't consider corrections that look exactly like the original command input.
-                    let cmd_string = rule_correction.to_command_string(&session_metadata.shell);
+                    let cmd_string = rule_correction
+                        .to_command_string(&session_metadata.shell)
+                        .trim()
+                        .to_owned();
+
                     (cmd_string != command.input).then_some(Correction {
                         command: cmd_string,
                         rule_applied: rule.id(),
