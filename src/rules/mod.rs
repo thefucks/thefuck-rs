@@ -12,6 +12,7 @@ mod java;
 mod ls;
 mod mkdir;
 mod npm;
+mod open;
 mod pip;
 mod python;
 mod rails;
@@ -34,6 +35,7 @@ lazy_static! {
             cat::command_group(),
             git::command_group(),
             java::command_group(),
+            open::command_group(),
             cd::command_group(),
             brew::command_group(),
             ls::command_group(),

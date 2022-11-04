@@ -1,3 +1,7 @@
+use std::{fs, path::Path};
+
+use tempfile::{tempdir, TempDir};
+
 use crate::{correct_command, Command, ExitCode, SessionMetadata};
 
 /// Doesn't make use of any session metadata.
@@ -13,4 +17,13 @@ pub fn regular_corrections(command: Command, metadata: &SessionMetadata) -> Vec<
         .into_iter()
         .map(|correction| correction.command)
         .collect()
+}
+
+pub fn with_temp_directories(dir_paths: &[impl AsRef<Path>], test: impl Fn(TempDir)) {
+    let tmpdir = tempdir().unwrap();
+    for path in dir_paths {
+        fs::create_dir_all(tmpdir.path().join(path.as_ref())).unwrap();
+    }
+
+    test(tmpdir)
 }
