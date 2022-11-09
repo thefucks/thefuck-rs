@@ -38,7 +38,7 @@ impl Rule for OpenDoesNotExist {
     fn generate_command_corrections<'a>(
         &self,
         command: &'a Command,
-        _session_metadata: &'a SessionMetadata,
+        session_metadata: &'a SessionMetadata,
     ) -> Option<Vec<RuleCorrection<'a>>> {
         // Check if opening an URL
         if let Some((url_pos, url)) = command
@@ -50,7 +50,7 @@ impl Rule for OpenDoesNotExist {
             let mut replacement = command.input_parts().to_vec();
             *replacement.get_mut(url_pos)? = "http://".to_owned() + url;
             Some(vec![replacement.into()])
-        } else {
+        } else if session_metadata.session_type.is_local() {
             // Check for a file / dir
             let open_arg = RE
                 .captures(command.output)
@@ -75,6 +75,8 @@ impl Rule for OpenDoesNotExist {
                     Some(vec![touch_replacement.into(), mkdir_replacement.into()])
                 }
             }
+        } else {
+            None
         }
     }
 }

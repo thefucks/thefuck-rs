@@ -52,6 +52,8 @@ fn get_files_at_path_with_filter_at_level<F>(path: &Path, filter_at_level: F) ->
 where
     F: Fn(&Path) -> bool,
 {
+    // TODO: this assumes that we're reading a local session. Eventually,
+    // we should be using a callback provided by the client to read this data.
     match fs::read_dir(path) {
         Ok(dir) => dir
             .into_iter()

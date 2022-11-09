@@ -1,5 +1,6 @@
 use std::path::Path;
 
+use super::matches_cd_doesnt_exist;
 use crate::rules::util::correct_path_at_every_level;
 use crate::rules::Rule;
 use crate::{default_rule_id, Command, RuleCorrection, SessionMetadata};
@@ -16,11 +17,8 @@ pub(crate) struct CdCorrection;
 impl Rule for CdCorrection {
     default_rule_id!(CdCorrection);
 
-    fn matches(&self, command: &Command, _session_metadata: &SessionMetadata) -> bool {
-        // TODO: eventually, use a callback to just check if the directory exists
-        let lowercase_output = command.lowercase_output();
-        lowercase_output.contains("does not exist")
-            || lowercase_output.contains("no such file or directory")
+    fn matches(&self, command: &Command, session_metadata: &SessionMetadata) -> bool {
+        matches_cd_doesnt_exist(command, session_metadata)
     }
 
     fn generate_command_corrections<'a>(
@@ -43,6 +41,7 @@ impl Rule for CdCorrection {
 #[cfg(test)]
 mod tests {
     use crate::test_utils::with_temp_directories;
+    use crate::SessionType;
     use crate::{test_utils::regular_corrections, Command, ExitCode, SessionMetadata};
 
     const SAMPLE_DIR_PATHS: &[&str] = &[
@@ -63,6 +62,22 @@ mod tests {
 
             assert!(regular_corrections(command, &SessionMetadata::default())
                 .contains(&"cd apples/bananas/oranges/mangos".to_owned()))
+        });
+    }
+
+    #[test]
+    fn test_cd_correction_with_remote_session() {
+        with_temp_directories(SAMPLE_DIR_PATHS, |tempdir| {
+            let command = Command::new(
+                "cd aples/banannas/oranges/mans",
+                "cd: no such file or directory: aples",
+                ExitCode(1),
+            )
+            .set_working_dir(tempdir.path().to_str().unwrap());
+
+            let mut session = SessionMetadata::default();
+            session.set_session_type(SessionType::Remote);
+            assert!(regular_corrections(command, &session).is_empty())
         });
     }
 }

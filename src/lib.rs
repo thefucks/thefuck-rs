@@ -211,8 +211,22 @@ type BranchName<'a> = &'a str;
 type HistoryItem<'a> = &'a str;
 
 #[derive(Default)]
+pub enum SessionType {
+    #[default]
+    Local,
+    Remote,
+}
+
+impl SessionType {
+    fn is_local(&self) -> bool {
+        matches!(self, SessionType::Local)
+    }
+}
+
+#[derive(Default)]
 pub struct SessionMetadata<'a> {
     shell: Shell,
+    session_type: SessionType,
 
     aliases: HashSet<AliasName<'a>>,
     builtins: HashSet<BuiltinName<'a>>,
@@ -253,6 +267,10 @@ impl<'a> SessionMetadata<'a> {
 
     pub fn set_git_branches(&mut self, git_branches: impl IntoIterator<Item = BranchName<'a>>) {
         self.git_branches = HashSet::from_iter(git_branches);
+    }
+
+    pub fn set_session_type(&mut self, session_type: SessionType) {
+        self.session_type = session_type;
     }
 
     pub fn set_shell(&mut self, shell: Shell) {
