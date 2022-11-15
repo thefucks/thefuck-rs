@@ -52,24 +52,37 @@ impl Rule for OpenDoesNotExist {
             Some(vec![replacement.into()])
         } else if session_metadata.session_type.is_local() {
             // Check for a file / dir
-            let open_arg = RE
+            // path_from_output is always an absolute path, while path_from_input could be relative or absolute (user-defined)
+            let path_from_output = RE
                 .captures(command.output)
                 .and_then(|captures| captures.get(1))
                 .map(|regex_match| Path::new(regex_match.as_str()))?;
 
+            // We want to correct the path the user provided, but the input could have contained flags, so we
+            // strategically find the part of the input that is the path (the output always contains an absolute path).
+            // To find this part, we know that the absolute path (i.e. path_from_output) must end with the input path,
+            // e.g. open foo => The file /Users/bob/foo does not exist
+            //      open /Users/bob/foo => The file /Users/bob/foo does not exist
+            let path_from_input = command
+                .input_parts()
+                .iter()
+                .find(|part| path_from_output.ends_with(part))?;
+
             let corrected_path =
-                correct_path_at_every_level(open_arg, command.working_dir?, |path| path.exists());
+                correct_path_at_every_level(path_from_input, command.working_dir?, |path| {
+                    path.exists()
+                });
 
             match corrected_path {
                 Some(path) => {
                     return new_commands_from_suggestions(
                         [path],
                         command.input_parts(),
-                        open_arg.to_str()?,
+                        path_from_input,
                     );
                 }
                 None => {
-                    let open_arg_string = open_arg.to_str()?;
+                    let open_arg_string = path_from_output.to_str()?;
                     let touch_replacement = vec!["touch", open_arg_string];
                     let mkdir_replacement = vec!["mkdir", open_arg_string];
                     Some(vec![touch_replacement.into(), mkdir_replacement.into()])
@@ -103,17 +116,45 @@ mod tests {
     }
 
     #[test]
-    fn test_open_correcting_path() {
+    fn test_open_with_relative() {
         with_temp_directories(SAMPLE_DIR_PATHS, |tmpdir| {
+            let output = format!(
+                "The file {}/aples/banannas/oranges/mans does not exist.",
+                tmpdir.path().to_str().unwrap()
+            );
             let command = Command::new(
                 "open aples/banannas/oranges/mans",
-                "The file aples/banannas/oranges/mans does not exist.",
+                output.as_str(),
                 ExitCode(1),
             )
             .set_working_dir(tmpdir.path().to_str().unwrap());
 
             assert!(regular_corrections(command, &SessionMetadata::default())
                 .contains(&"open apples/bananas/oranges/mangos".to_owned()))
+        });
+    }
+
+    #[test]
+    fn test_open_with_absolute() {
+        with_temp_directories(SAMPLE_DIR_PATHS, |tmpdir| {
+            let input_absolute_path = format!(
+                "open {}/aples/banannas/oranges/mans",
+                tmpdir.path().to_str().unwrap()
+            );
+            let output = format!(
+                "The file {}/aples/banannas/oranges/mans does not exist.",
+                tmpdir.path().to_str().unwrap()
+            );
+            let command = Command::new(&input_absolute_path, &output, ExitCode(1))
+                .set_working_dir(tmpdir.path().to_str().unwrap());
+            let correct_output = format!(
+                "open {}/apples/bananas/oranges/mangos",
+                tmpdir.path().to_str().unwrap()
+            );
+
+            assert!(
+                regular_corrections(command, &SessionMetadata::default()).contains(&correct_output)
+            );
         });
     }
 
