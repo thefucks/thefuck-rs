@@ -172,8 +172,7 @@ pub struct Command<'a> {
 
 impl<'a> Command<'a> {
     pub fn new(input: &'a str, output: &'a str, exit_code: ExitCode) -> Self {
-        // TODO: We need to re-escape multiword parts in the input after splitting. Thefuck has a
-        // terribly hacky way of doing this here: https://github.com/nvbn/thefuck/blob/4c7479b3adcf8715a93d0c48e1ece83a35cda50d/thefuck/shells/generic.py#L87
+        // TODO: We need to re-escape multiword parts in the input after splitting.
         let input = input.trim();
         let output = output.trim();
         let input_parts = shlex::split(input).unwrap_or_default();
@@ -211,8 +210,22 @@ type BranchName<'a> = &'a str;
 type HistoryItem<'a> = &'a str;
 
 #[derive(Default)]
+pub enum SessionType {
+    #[default]
+    Local,
+    Remote,
+}
+
+impl SessionType {
+    fn is_local(&self) -> bool {
+        matches!(self, SessionType::Local)
+    }
+}
+
+#[derive(Default)]
 pub struct SessionMetadata<'a> {
     shell: Shell,
+    session_type: SessionType,
 
     aliases: HashSet<AliasName<'a>>,
     builtins: HashSet<BuiltinName<'a>>,
@@ -253,6 +266,10 @@ impl<'a> SessionMetadata<'a> {
 
     pub fn set_git_branches(&mut self, git_branches: impl IntoIterator<Item = BranchName<'a>>) {
         self.git_branches = HashSet::from_iter(git_branches);
+    }
+
+    pub fn set_session_type(&mut self, session_type: SessionType) {
+        self.session_type = session_type;
     }
 
     pub fn set_shell(&mut self, shell: Shell) {
