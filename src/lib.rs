@@ -172,8 +172,7 @@ pub struct Command<'a> {
 
 impl<'a> Command<'a> {
     pub fn new(input: &'a str, output: &'a str, exit_code: ExitCode) -> Self {
-        // TODO: We need to re-escape multiword parts in the input after splitting. Thefuck has a
-        // terribly hacky way of doing this here: https://github.com/nvbn/thefuck/blob/4c7479b3adcf8715a93d0c48e1ece83a35cda50d/thefuck/shells/generic.py#L87
+        // TODO: We need to re-escape multiword parts in the input after splitting.
         let input = input.trim();
         let output = output.trim();
         let input_parts = shlex::split(input).unwrap_or_default();

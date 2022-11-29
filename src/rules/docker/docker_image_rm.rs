@@ -8,8 +8,8 @@ impl Rule for DockerImageRm {
 
     fn matches(&self, command: &Command, _session_metadata: &SessionMetadata) -> bool {
         // Differs from thefuck since we don't specifically check if it failed
-        // because of a running container (docker error messages differ from
-        // version to version so we're keeping the check more lean).
+        // because of a running container (docker error messages can differ from
+        // version to version).
         command.input.contains("image rm")
     }
 

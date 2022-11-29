@@ -14,8 +14,8 @@ impl Rule for CatDir {
     default_rule_id!(CatDir);
 
     fn matches(&self, command: &Command, _session_metadata: &SessionMetadata) -> bool {
-        // Note: thefuck does this by checking that the second input part is a directory itself.
-        // This can be slightly problematic if there are options between cat and the arg (e.g. `cat -b src`).
+        // Note: we could do this by checking if the second input part is a directory itself, but
+        // this can be slightly problematic if there are options between cat and the arg (e.g. `cat -b src`).
         RE.is_match(command.output)
     }
 
